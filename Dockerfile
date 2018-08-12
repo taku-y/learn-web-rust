@@ -57,6 +57,9 @@ RUN /bin/bash -c 'source ~/.nvm/nvm.sh && nvm install 8.9.4 && nvm alias default
 # Plotly
 RUN /bin/bash -c 'source ~/.nvm/nvm.sh && npm install -g plotly.js-dist'
 
+# Cargo-web
+RUN source /root/.cargo/env && cargo install cargo-web
+
 # Cleanup
 RUN rm -rf /var/lib/apt/lists/*
 
