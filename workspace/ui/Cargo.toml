@@ -1,0 +1,10 @@
+[package]
+name = "ui"
+version = "0.1.0"
+authors = ["root"]
+
+[dependencies]
+yew = { git = "https://github.com/DenisKolodin/yew.git", branch = "master" }
+serde = "1"
+serde_derive = "1"
+failure = "0.1"
