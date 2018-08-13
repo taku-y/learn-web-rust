@@ -7,12 +7,14 @@ extern crate yew;
 use failure::Error;
 use yew::prelude::*;
 use yew::format::Json;
-use yew::services::Task;
+use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
+
+type AsBinary = bool;
 
 pub enum WsAction {
     Connect,
-    //SendData(AsBinary),
+    SendData(AsBinary),
     Disconnect,
     Lost,
 }
@@ -24,9 +26,9 @@ struct WsRequest {
 }
 
 /// This type is an expected response from a websocket connection.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct WsResponse {
-    value: u32,
+    pub value: u32,
 }
 
 pub enum Msg {
@@ -38,9 +40,9 @@ pub enum Msg {
 pub struct Model {
     ws_service: WebSocketService,
     link: ComponentLink<Model>,
-    //fetching: bool,
     data: Option<u32>,
     ws: Option<WebSocketTask>,
+    console: ConsoleService,
 }
 
 impl From<WsAction> for Msg {
@@ -58,8 +60,9 @@ impl Component for Model {
         Model {
             ws_service: WebSocketService::new(),
             link,
-            data: None,
+            data: Some(777 as u32),
             ws: None,
+            console: ConsoleService::new(),
         }
     }
 
@@ -78,6 +81,16 @@ impl Component for Model {
                         let task = self.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
                         self.ws = Some(task);
                     }
+                    WsAction::SendData(binary) => {
+                        let request = WsRequest {
+                            value: 321,
+                        };
+                        if binary {
+                            self.ws.as_mut().unwrap().send_binary(Json(&request));
+                        } else {
+                            self.ws.as_mut().unwrap().send(Json(&request));
+                        }
+                    }
                     WsAction::Disconnect => {
                         self.ws.take().unwrap().cancel();
                     }
@@ -87,6 +100,7 @@ impl Component for Model {
                 }
             }
             Msg::WsReady(response) => {
+                self.console.info(&format!("{:?}", response));
                 self.data = response.map(|data| data.value).ok();
             }
             Msg::Ignore => {
@@ -105,10 +119,10 @@ impl Renderable<Model> for Model {
                      { self.view_data() }
                     <button disabled=self.ws.is_some(),
                             onclick=|_| WsAction::Connect.into(),>{ "Connect To WebSocket" }</button>
-//                    <button disabled=self.ws.is_none(),
-//                            onclick=|_| WsAction::SendData(false).into(),>{ "Send To WebSocket" }</button>
-//                    <button disabled=self.ws.is_none(),
-//                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
+                    <button disabled=self.ws.is_none(),
+                            onclick=|_| WsAction::SendData(false).into(),>{ "Send To WebSocket" }</button>
+                    <button disabled=self.ws.is_none(),
+                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
                     <button disabled=self.ws.is_none(),
                             onclick=|_| WsAction::Disconnect.into(),>{ "Close WebSocket connection" }</button>
                 </nav>
