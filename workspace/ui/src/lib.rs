@@ -57,16 +57,21 @@ impl Component for Model {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         // TODO: create connection to the websocket server here
+        let mut console = ConsoleService::new();
+        console.info("Model::create() was invoked");
+
         Model {
             ws_service: WebSocketService::new(),
             link,
             data: Some(777 as u32),
             ws: None,
-            console: ConsoleService::new(),
+            console: console,
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        self.console.info("Model::update() was invoked");
+
         match msg {
             Msg::WsAction(action) => {
                 match action {
