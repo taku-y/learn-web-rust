@@ -2,7 +2,7 @@
 #![plugin(rocket_codegen)]
 #![allow(unused_variables)]
 #![allow(unused_mut)]
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 #![allow(unused_must_use)]
 #![allow(dead_code)]
 #![feature(proc_macro_non_items)]
@@ -14,6 +14,10 @@ extern crate rocket;
 extern crate rocket_contrib;
 extern crate sled;
 extern crate tempdir;
+extern crate failure;
+extern crate tungstenite;
+extern crate yew;
+extern crate ui;
 
 #[macro_use]
 extern crate serde_derive;
@@ -21,16 +25,22 @@ extern crate serde;
 extern crate serde_json;
 
 use serde::Serialize;
+use std::thread;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use bincode::{deserialize, serialize};
+//use bincode::{deserialize, serialize};
 #[macro_use]
 use maud::{html, Markup};
-use rocket::response::status;
+//use rocket::response::status;
 use rocket::response::NamedFile;
 use rocket::State;
-use rocket_contrib::Json;
+//use rocket_contrib::Json;
 use sled::{ConfigBuilder, Tree};
+use std::net::TcpListener;
+use std::thread::spawn;
+use tungstenite::server::accept;
+use yew::format::{Text, Json};
+use ui::WsResponse;
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -69,7 +79,7 @@ fn ugly_hack() -> Option<NamedFile> {
     NamedFile::open(Path::new("static/ui.wasm")).ok()
 }
 
-fn main() {
+fn start_web_server() {
     let path = String::from("data.db");
     let conf = sled::ConfigBuilder::new().path(path).build();
     let tree = Tree::start(conf).unwrap();
@@ -78,37 +88,30 @@ fn main() {
     rocket::ignite().mount("/", routes).manage(db_arc).launch();
 }
 
-// Below code is a websocket server.
+fn start_websocket_server() {
+    let server = TcpListener::bind("0.0.0.0:9001").unwrap();
+    for stream in server.incoming() {
+        println!("Message came");
+        spawn (move || {
+            let mut websocket = accept(stream.unwrap()).unwrap();
+            loop {
+                let msg = websocket.read_message().unwrap();
+                println!("Reveived: {:?}", msg);
+                if msg.is_binary() || msg.is_text() {
+                    websocket.write_message(msg).unwrap();
+                }
+                let msg = WsResponse{ value: 333 };
+                let msg: Text = Json(&msg).into();
+                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
+                println!("Prepared: {:?}", msg);
+                websocket.write_message(msg).unwrap();
+            }
+        });
+    }
+}
 
-//extern crate failure;
-//extern crate tungstenite;
-//extern crate yew;
-//extern crate ui;
-//
-//use std::net::TcpListener;
-//use std::thread::spawn;
-//use tungstenite::server::accept;
-//use yew::format::{Text, Json};
-//use ui::WsResponse;
-//
-//fn main() {
-//    let server = TcpListener::bind("0.0.0.0:9001").unwrap();
-//    for stream in server.incoming() {
-//        println!("Message came");
-//        spawn (move || {
-//            let mut websocket = accept(stream.unwrap()).unwrap();
-//            loop {
-//                let msg = websocket.read_message().unwrap();
-//                println!("Reveived: {:?}", msg);
-//                if msg.is_binary() || msg.is_text() {
-//                    websocket.write_message(msg).unwrap();
-//                }
-//                let msg = WsResponse{ value: 333 };
-//                let msg: Text = Json(&msg).into();
-//                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
-//                println!("Prepared: {:?}", msg);
-//                websocket.write_message(msg).unwrap();
-//            }
-//        });
-//    }
-//}
+fn main() {
+    thread::spawn(|| { start_web_server(); });
+    start_websocket_server();
+    //loop {};
+}
