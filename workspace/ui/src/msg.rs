@@ -9,7 +9,7 @@ extern crate wdview_msg;
 
 use failure::Error;
 use yew::format::{Text, Binary};
-//use wdview_msg::{Message, Data, Command};
+use wdview_msg::{WsMessage, Data, Command};
 
 type AsBinary = bool;
 
@@ -38,12 +38,6 @@ pub struct WsResponse {
     pub value: u32,
 }
 
-pub enum Msg {
-    WsAction(WsAction),
-    WsReady(Result<WsResponse, Error>),
-    Ignore,
-}
-
 #[derive(Debug)]
 pub enum MyData {
     String(String),
@@ -60,4 +54,14 @@ impl From<Binary> for MyData {
     fn from(bin: Binary) -> Self {
         MyData::Binary(bin.unwrap())
     }
+}
+
+pub enum UiMessage {
+    Ignore,
+}
+
+pub enum ModelMessage {
+    WsMessage(WsMessage),
+    UiMessage(UiMessage),
+    Ignore,
 }

@@ -3,10 +3,12 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+// Message via WebSocket
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Message {
+pub enum WsMessage {
     Data(Data),
     Command(Command),
+    Ignore,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

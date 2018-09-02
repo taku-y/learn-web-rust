@@ -9,8 +9,9 @@ use yew::prelude::*;
 use yew::format::Json;
 use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
+use wdview_msg::{WsMessage};
 pub mod msg;
-use msg::{Msg, WsAction, WsRequest, MyData};
+use msg::{ModelMessage, WsAction, WsRequest, MyData};
 
 pub struct Model {
     ws_service: WebSocketService,
@@ -20,8 +21,16 @@ pub struct Model {
     console: ConsoleService,
 }
 
+impl From<Text> for WsMessage {
+    WsMessage(WsMessage::Ignore)
+}
+
+impl From<Binary> for WsMessage {
+    WsMessage(WsMessage::Ignore)
+}
+
 impl Component for Model {
-    type Message = Msg;
+    type Message = ModelMessage;
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
@@ -37,24 +46,18 @@ impl Component for Model {
         };
 
         // Open websocket connection
-        let callback = model.link.send_back(|data: MyData| {
+        let callback = model.link.send_back(|data: WsMessage| {
             let mut console = ConsoleService::new();
             console.info("callback");
-            console.info(&format!("{:?}", &data));
-            Msg::Ignore
+            //console.info(&format!("{:?}", &data));
+            ModelMessage::Ignore
         });
-//        let callback = model.link.send_back(move |Json(data)| {
-//            let mut console = ConsoleService::new();
-//            console.info("callback");
-//            console.info(&format!("{:?}", &data));
-//            Msg::WsReady(data)
-//        });
         let notification = model.link.send_back(|status| {
-                            match status {
-                                WebSocketStatus::Opened => Msg::Ignore,
-                                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
-                            }
-                        });
+            match status {
+                WebSocketStatus::Opened => WDViewMessage::Ignore,
+                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+            }
+        });
         // TODO: Set websocket server address when accessing HTTP server
         let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
         model.ws = Some(task);
