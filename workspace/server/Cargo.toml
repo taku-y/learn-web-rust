@@ -17,6 +17,7 @@ failure = "0.1"
 tungstenite = "0.5.2"
 yew = { git = "https://github.com/DenisKolodin/yew.git", branch = "master" }
 ui = { path = "../ui" }
+wdview_msg = { path = "../wdview_msg" }
 
 [dependencies.maud]
 branch = "master"

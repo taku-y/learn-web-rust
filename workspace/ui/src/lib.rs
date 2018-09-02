@@ -37,6 +37,12 @@ pub enum Msg {
     Ignore,
 }
 
+impl From<WsAction> for Msg {
+    fn from(action: WsAction) -> Self {
+        Msg::WsAction(action)
+    }
+}
+
 pub struct Model {
     ws_service: WebSocketService,
     link: ComponentLink<Model>,
@@ -45,28 +51,35 @@ pub struct Model {
     console: ConsoleService,
 }
 
-impl From<WsAction> for Msg {
-    fn from(action: WsAction) -> Self {
-        Msg::WsAction(action)
-    }
-}
-
 impl Component for Model {
     type Message = Msg;
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        // TODO: create connection to the websocket server here
         let mut console = ConsoleService::new();
         console.info("Model::create() was invoked");
 
-        Model {
+        let mut model = Model {
             ws_service: WebSocketService::new(),
             link,
             data: Some(777 as u32),
             ws: None,
             console: console,
-        }
+        };
+
+        // Open websocket connection
+        let callback = model.link.send_back(|Json(data)| Msg::WsReady(data));
+        let notification = model.link.send_back(|status| {
+                            match status {
+                                WebSocketStatus::Opened => Msg::Ignore,
+                                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+                            }
+                        });
+        // TODO: Set websocket server address when accessing HTTP server
+        let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
+        model.ws = Some(task);
+
+        model
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {

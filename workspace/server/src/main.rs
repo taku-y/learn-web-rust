@@ -18,6 +18,7 @@ extern crate failure;
 extern crate tungstenite;
 extern crate yew;
 extern crate ui;
+extern crate wdview_msg;
 
 #[macro_use]
 extern crate serde_derive;
@@ -41,6 +42,7 @@ use std::thread::spawn;
 use tungstenite::server::accept;
 use yew::format::{Text, Json};
 use ui::WsResponse;
+use wdview_msg::{Message, Data, Command};
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -93,7 +95,19 @@ fn start_websocket_server() {
     for stream in server.incoming() {
         println!("Message came");
         spawn (move || {
+            // Handshake
             let mut websocket = accept(stream.unwrap()).unwrap();
+
+            // Send a wdview message
+            let msg1 = Message::Data(Data{data: vec![1., 2., 3.]});
+            let msg2 = Message::Command(Command::Plot2D);
+            let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
+            let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
+            println!("{:?}", &msg1);
+            websocket.write_message(msg1).unwrap();
+            websocket.write_message(msg2).unwrap();
+
+            // Websocket vent loop
             loop {
                 let msg = websocket.read_message().unwrap();
                 println!("Reveived: {:?}", msg);
