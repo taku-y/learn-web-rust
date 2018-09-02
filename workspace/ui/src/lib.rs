@@ -11,7 +11,7 @@ use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use wdview_msg::{WsMessage};
 pub mod msg;
-use msg::{ModelMessage, WsAction, WsRequest, MyData};
+use msg::{ModelMessage};
 
 pub struct Model {
     ws_service: WebSocketService,
@@ -69,45 +69,62 @@ impl Component for Model {
         self.console.info("Model::update() was invoked");
 
         match msg {
-            Msg::WsAction(action) => {
-                match action {
-                    WsAction::Connect => {
-                        let callback = self.link.send_back(|Json(data)| Msg::WsReady(data));
-                        let notification = self.link.send_back(|status| {
-                            match status {
-                                WebSocketStatus::Opened => Msg::Ignore,
-                                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
-                            }
-                        });
-                        let task = self.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
-                        self.ws = Some(task);
+            ModelMessage::WsMessage(wsmsg) => {
+                match wsmsg {
+                    WsMessage::Data(data) => {
+                        self.console.info(format!("{:?}", &data));
                     }
-                    WsAction::SendData(binary) => {
-                        let request = WsRequest {
-                            value: 321,
-                        };
-                        if binary {
-                            self.ws.as_mut().unwrap().send_binary(Json(&request));
-                        } else {
-                            self.ws.as_mut().unwrap().send(Json(&request));
-                        }
+                    WsMessage::Command(command) => {
+                        self.console.info(format!("{:?}", &command));
                     }
-                    WsAction::Disconnect => {
-                        self.ws.take().unwrap().cancel();
+                    WsMessage::Ignore => {
+                        self.console.info(format!("Ignore"));
                     }
-                    WsAction::Lost => {
-                        self.ws = None;
-                    }
+//                    WsAction::Connect => {
+//                        let callback = self.link.send_back(|Json(data)| Msg::WsReady(data));
+//                        let notification = self.link.send_back(|status| {
+//                            match status {
+//                                WebSocketStatus::Opened => Msg::Ignore,
+//                                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+//                            }
+//                        });
+//                        let task = self.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
+//                        self.ws = Some(task);
+//                    }
+//                    WsAction::SendData(binary) => {
+//                        let request = WsRequest {
+//                            value: 321,
+//                        };
+//                        if binary {
+//                            self.ws.as_mut().unwrap().send_binary(Json(&request));
+//                        } else {
+//                            self.ws.as_mut().unwrap().send(Json(&request));
+//                        }
+//                    }
+//                    WsAction::Disconnect => {
+//                        self.ws.take().unwrap().cancel();
+//                    }
+//                    WsAction::Lost => {
+//                        self.ws = None;
+//                    }
+//                }
                 }
             }
-            Msg::WsReady(response) => {
-                self.console.info(&format!("{:?}", response));
-                self.data = response.map(|data| data.value).ok();
+            ModelMessage::UiMessage(_) => {
+                self.console.info(format!("UiMessage"));
             }
-            Msg::Ignore => {
-                return false;
+            ModelMessage::Ignore => {
+                self.console.info(format!("Ignore"));
             }
         }
+//            Msg::WsReady(response) => {
+//                self.console.info(&format!("{:?}", response));
+//                self.data = response.map(|data| data.value).ok();
+//            }
+//            Msg::Ignore => {
+//                return false;
+//            }
+
         true
     }
 }
@@ -116,16 +133,16 @@ impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
             <div>
-                <nav class="menu",>
-                     { self.view_data() }
-                    <button disabled=self.ws.is_some(),
-                            onclick=|_| WsAction::Connect.into(),>{ "Connect To WebSocket" }</button>
-                    <button disabled=self.ws.is_none(),
-                            onclick=|_| WsAction::SendData(false).into(),>{ "Send To WebSocket" }</button>
-                    <button disabled=self.ws.is_none(),
-                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
-                    <button disabled=self.ws.is_none(),
-                            onclick=|_| WsAction::Disconnect.into(),>{ "Close WebSocket connection" }</button>
+//                <nav class="menu",>
+//                     { self.view_data() }
+//                    <button disabled=self.ws.is_some(),
+//                            onclick=|_| WsAction::Connect.into(),>{ "Connect To WebSocket" }</button>
+//                    <button disabled=self.ws.is_none(),
+//                            onclick=|_| WsAction::SendData(false).into(),>{ "Send To WebSocket" }</button>
+//                    <button disabled=self.ws.is_none(),
+//                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
+//                    <button disabled=self.ws.is_none(),
+//                            onclick=|_| WsAction::Disconnect.into(),>{ "Close WebSocket connection" }</button>
                 </nav>
             </div>
         }
