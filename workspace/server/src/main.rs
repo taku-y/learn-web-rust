@@ -41,7 +41,7 @@ use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
 use yew::format::{Text, Json};
-use ui::WsResponse;
+use ui::msg::WsResponse;
 use wdview_msg::{Message, Data, Command};
 
 fn all_routes() -> Vec<rocket::Route> {
@@ -97,6 +97,13 @@ fn start_websocket_server() {
         spawn (move || {
             // Handshake
             let mut websocket = accept(stream.unwrap()).unwrap();
+            println!("websocket object was created");
+
+//            let msg = WsResponse{ value: 333 };
+//            let msg: Text = Json(&msg).into();
+//            let msg = tungstenite::protocol::Message::Text(msg.unwrap());
+//            println!("Sent message {:?}", msg);
+//            websocket.write_message(msg).unwrap();
 
             // Send a wdview message
             let msg1 = Message::Data(Data{data: vec![1., 2., 3.]});
@@ -110,14 +117,14 @@ fn start_websocket_server() {
             // Websocket vent loop
             loop {
                 let msg = websocket.read_message().unwrap();
-                println!("Reveived: {:?}", msg);
+                println!("Received: {:?}", msg);
                 if msg.is_binary() || msg.is_text() {
                     websocket.write_message(msg).unwrap();
                 }
                 let msg = WsResponse{ value: 333 };
                 let msg: Text = Json(&msg).into();
                 let msg = tungstenite::protocol::Message::Text(msg.unwrap());
-                println!("Prepared: {:?}", msg);
+                println!("Sent message: {:?}", msg);
                 websocket.write_message(msg).unwrap();
             }
         });

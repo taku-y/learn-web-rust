@@ -3,45 +3,16 @@ extern crate failure;
 extern crate serde_derive;
 #[macro_use]
 extern crate yew;
+extern crate wdview_msg;
 
 use failure::Error;
 use yew::prelude::*;
-use yew::format::Json;
+use yew::format::{Json, Text, Binary};
 use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-
-type AsBinary = bool;
-
-pub enum WsAction {
-    Connect,
-    SendData(AsBinary),
-    Disconnect,
-    Lost,
-}
-
-/// This type is used as a request which sent to websocket connection.
-#[derive(Serialize, Debug)]
-struct WsRequest {
-    value: u32,
-}
-
-/// This type is an expected response from a websocket connection.
-#[derive(Deserialize, Serialize, Debug)]
-pub struct WsResponse {
-    pub value: u32,
-}
-
-pub enum Msg {
-    WsAction(WsAction),
-    WsReady(Result<WsResponse, Error>),
-    Ignore,
-}
-
-impl From<WsAction> for Msg {
-    fn from(action: WsAction) -> Self {
-        Msg::WsAction(action)
-    }
-}
+use wdview_msg::{Message, Data, Command};
+pub mod msg;
+use msg::{Msg, WsAction, WsRequest, MyData};
 
 pub struct Model {
     ws_service: WebSocketService,
@@ -68,7 +39,18 @@ impl Component for Model {
         };
 
         // Open websocket connection
-        let callback = model.link.send_back(|Json(data)| Msg::WsReady(data));
+        let callback = model.link.send_back(|data: MyData| {
+            let mut console = ConsoleService::new();
+            console.info("callback");
+            console.info(&format!("{:?}", &data));
+            Msg::Ignore
+        });
+//        let callback = model.link.send_back(move |Json(data)| {
+//            let mut console = ConsoleService::new();
+//            console.info("callback");
+//            console.info(&format!("{:?}", &data));
+//            Msg::WsReady(data)
+//        });
         let notification = model.link.send_back(|status| {
                             match status {
                                 WebSocketStatus::Opened => Msg::Ignore,
