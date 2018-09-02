@@ -8,11 +8,8 @@ extern crate failure;
 extern crate wdview_msg;
 
 use failure::Error;
-use yew::prelude::*;
-use yew::format::{Json, Text, Binary};
-use yew::services::{Task, ConsoleService};
-use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-use wdview_msg::{Message, Data, Command};
+use yew::format::{Text, Binary};
+//use wdview_msg::{Message, Data, Command};
 
 type AsBinary = bool;
 

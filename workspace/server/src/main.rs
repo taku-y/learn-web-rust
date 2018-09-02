@@ -2,11 +2,9 @@
 #![plugin(rocket_codegen)]
 #![allow(unused_variables)]
 #![allow(unused_mut)]
-//#![allow(unused_imports)]
 #![allow(unused_must_use)]
 #![allow(dead_code)]
 #![feature(proc_macro_non_items)]
-#![feature(use_extern_macros)]
 
 extern crate bincode;
 extern crate maud;
@@ -20,23 +18,17 @@ extern crate yew;
 extern crate ui;
 extern crate wdview_msg;
 
-#[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-use serde::Serialize;
 use std::thread;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
-//use bincode::{deserialize, serialize};
-#[macro_use]
+use std::sync::Arc;
 use maud::{html, Markup};
-//use rocket::response::status;
 use rocket::response::NamedFile;
 use rocket::State;
-//use rocket_contrib::Json;
-use sled::{ConfigBuilder, Tree};
+use sled::Tree;
 use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
@@ -49,14 +41,10 @@ fn all_routes() -> Vec<rocket::Route> {
         index,
         static_file,
         ugly_hack,
-//        create_task,
-//        get_task,
-//        get_tasks,
-//        update_all_tasks
     ]
 }
 
-/// This is the entrypoint for our yew client side app.
+/// This is the entry point for our yew client side app.
 #[get("/")]
 fn index(db: State<Arc<sled::Tree>>) -> Markup {
     // maud macro
