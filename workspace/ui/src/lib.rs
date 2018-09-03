@@ -1,32 +1,42 @@
 extern crate failure;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 #[macro_use]
 extern crate yew;
 extern crate wdview_msg;
 
+use std::collections::HashMap;
 use yew::prelude::*;
-use yew::format::Json;
+use yew::format::{Json, Text, Binary};
 use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-use wdview_msg::{WsMessage};
+use wdview_msg::{WsMessage, Data};
 pub mod msg;
 use msg::{ModelMessage};
 
 pub struct Model {
     ws_service: WebSocketService,
     link: ComponentLink<Model>,
-    data: Option<u32>,
+    data: HashMap<String, Data>,
     ws: Option<WebSocketTask>,
     console: ConsoleService,
 }
 
-impl From<Text> for WsMessage {
-    WsMessage(WsMessage::Ignore)
+struct WsMessageForModel(WsMessage);
+
+impl From<Text> for WsMessageForModel {
+    fn from(text: Text) -> WsMessageForModel {
+        WsMessageForModel(
+            serde_json::from_str(&text.unwrap()).unwrap()
+        )
+    }
 }
 
-impl From<Binary> for WsMessage {
-    WsMessage(WsMessage::Ignore)
+impl From<Binary> for WsMessageForModel {
+    fn from(bin: Binary) -> WsMessageForModel {
+        WsMessageForModel(WsMessage::Ignore)
+    }
 }
 
 impl Component for Model {
@@ -40,27 +50,29 @@ impl Component for Model {
         let mut model = Model {
             ws_service: WebSocketService::new(),
             link,
-            data: Some(777 as u32),
+            data: HashMap::new(),
             ws: None,
-            console: console,
+            console: ConsoleService::new(),
         };
+        console.info("Model was created");
 
         // Open websocket connection
-        let callback = model.link.send_back(|data: WsMessage| {
-            let mut console = ConsoleService::new();
-            console.info("callback");
-            //console.info(&format!("{:?}", &data));
-            ModelMessage::Ignore
+        let callback = model.link.send_back(
+            |WsMessageForModel(msg)| {ModelMessage::WsMessage(msg)
         });
         let notification = model.link.send_back(|status| {
             match status {
-                WebSocketStatus::Opened => WDViewMessage::Ignore,
-                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+                WebSocketStatus::Opened => ModelMessage::Ignore,
+                WebSocketStatus::Closed | WebSocketStatus::Error => ModelMessage::Ignore,
+//                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+
             }
         });
+        console.info("Closures were created");
         // TODO: Set websocket server address when accessing HTTP server
         let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
         model.ws = Some(task);
+        console.info("Handshake");
 
         model
     }
@@ -72,13 +84,13 @@ impl Component for Model {
             ModelMessage::WsMessage(wsmsg) => {
                 match wsmsg {
                     WsMessage::Data(data) => {
-                        self.console.info(format!("{:?}", &data));
+                        self.console.info(&format!("{:?}", &data));
                     }
                     WsMessage::Command(command) => {
-                        self.console.info(format!("{:?}", &command));
+                        self.console.info(&format!("{:?}", &command));
                     }
                     WsMessage::Ignore => {
-                        self.console.info(format!("Ignore"));
+                        self.console.info(&format!("Ignore"));
                     }
 //                    WsAction::Connect => {
 //                        let callback = self.link.send_back(|Json(data)| Msg::WsReady(data));
@@ -111,10 +123,10 @@ impl Component for Model {
                 }
             }
             ModelMessage::UiMessage(_) => {
-                self.console.info(format!("UiMessage"));
+                self.console.info(&format!("UiMessage"));
             }
             ModelMessage::Ignore => {
-                self.console.info(format!("Ignore"));
+                self.console.info(&format!("Ignore"));
             }
         }
 //            Msg::WsReady(response) => {
@@ -143,7 +155,7 @@ impl Renderable<Model> for Model {
 //                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
 //                    <button disabled=self.ws.is_none(),
 //                            onclick=|_| WsAction::Disconnect.into(),>{ "Close WebSocket connection" }</button>
-                </nav>
+//                </nav>
             </div>
         }
     }
@@ -152,14 +164,19 @@ impl Renderable<Model> for Model {
 
 impl Model {
     fn view_data(&self) -> Html<Model> {
-        if let Some(value) = self.data {
-            html! {
-                <p>{ value }</p>
-            }
-        } else {
-            html! {
-                <p>{ "Data hasn't fetched yet." }</p>
-            }
+        html! {
+            <p>{ "Data hasn't fetched yet." }</p>
         }
+//        if let Some(value) = self.data {
+//            html! {
+//                <p>{ value }</p>
+//            }
+//        } else {
+//            html! {
+//                <p>{ "Data hasn't fetched yet." }</p>
+//            }
+//        }
     }
+
+
 }

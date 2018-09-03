@@ -13,6 +13,7 @@ pub enum WsMessage {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
+    pub name: String,
     pub data: Vec<f32>,
 }
 

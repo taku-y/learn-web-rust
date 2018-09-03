@@ -33,8 +33,7 @@ use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
 use yew::format::{Text, Json};
-use ui::msg::WsResponse;
-use wdview_msg::{Message, Data, Command};
+use wdview_msg::{WsMessage, Data, Command};
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -87,18 +86,16 @@ fn start_websocket_server() {
             let mut websocket = accept(stream.unwrap()).unwrap();
             println!("websocket object was created");
 
-//            let msg = WsResponse{ value: 333 };
-//            let msg: Text = Json(&msg).into();
-//            let msg = tungstenite::protocol::Message::Text(msg.unwrap());
-//            println!("Sent message {:?}", msg);
-//            websocket.write_message(msg).unwrap();
-
             // Send a wdview message
-            let msg1 = Message::Data(Data{data: vec![1., 2., 3.]});
-            let msg2 = Message::Command(Command::Plot2D);
+            let msg1 = WsMessage::Data(
+                Data{name: "3-dim vector".to_string(), data: vec![1., 2., 3.]}
+            );
+            let msg2 = WsMessage::Command(Command::Plot2D);
             let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
             let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
+            println!("Following messages will be sent for debug");
             println!("{:?}", &msg1);
+            println!("{:?}", &msg2);
             websocket.write_message(msg1).unwrap();
             websocket.write_message(msg2).unwrap();
 
@@ -109,11 +106,11 @@ fn start_websocket_server() {
                 if msg.is_binary() || msg.is_text() {
                     websocket.write_message(msg).unwrap();
                 }
-                let msg = WsResponse{ value: 333 };
-                let msg: Text = Json(&msg).into();
-                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
-                println!("Sent message: {:?}", msg);
-                websocket.write_message(msg).unwrap();
+//                let msg = WsResponse{ value: 333 };
+//                let msg: Text = Json(&msg).into();
+//                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
+//                println!("Sent message: {:?}", msg);
+//                websocket.write_message(msg).unwrap();
             }
         });
     }
