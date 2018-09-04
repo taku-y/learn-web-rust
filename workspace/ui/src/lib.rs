@@ -40,10 +40,10 @@ impl Component for Model {
         };
         console.info("Model was created");
 
-        // Open websocket connection
+        // Open websocket connection with callback
         let callback = model.link.send_back(
-            |WsMessageForModel(msg)| {ModelMessage::WsMessage(msg)
-        });
+            |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
+        );
         let notification = model.link.send_back(|status| {
             match status {
                 WebSocketStatus::Opened => ModelMessage::Ignore,
@@ -104,21 +104,21 @@ impl Renderable<Model> for Model {
     }
 }
 
-impl Model {
-    fn view_data(&self) -> Html<Model> {
-        html! {
-            <p>{ "Data hasn't fetched yet." }</p>
-        }
-//        if let Some(value) = self.data {
-//            html! {
-//                <p>{ value }</p>
-//            }
-//        } else {
-//            html! {
-//                <p>{ "Data hasn't fetched yet." }</p>
-//            }
+//impl Model {
+//    fn view_data(&self) -> Html<Model> {
+//        html! {
+//            <p>{ "Data hasn't fetched yet." }</p>
 //        }
-    }
-
-
-}
+////        if let Some(value) = self.data {
+////            html! {
+////                <p>{ value }</p>
+////            }
+////        } else {
+////            html! {
+////                <p>{ "Data hasn't fetched yet." }</p>
+////            }
+////        }
+//    }
+//
+//
+//}
