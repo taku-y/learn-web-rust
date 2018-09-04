@@ -20,6 +20,7 @@ pub struct Data {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Body {
     Vector(Vector),
+    VectorPair(VectorPair),
     Matrix
 }
 
@@ -30,9 +31,34 @@ pub struct Vector {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct VectorPair {
+    pub name_row_x: Option<Vec<String>>,
+    pub name_row_y: Option<Vec<String>>,
+    pub data_x: Vec<f32>,
+    pub data_y: Vec<f32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Command {
-    Plot2D,
+    Plot(PlotParam),
     ScatterPlot,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum PlotParam {
+    PlotParamForVector(PlotParamForVector),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PlotParamForVector {
+    pub data_name: String,
+    pub area_name: String,
+}
+
+impl PlotParamForVector {
+    pub fn into_wsmsg(self) -> WsMessage {
+        WsMessage::Command(Command::Plot(PlotParam::PlotParamForVector(self)))
+    }
 }
 
 //#[cfg(test)]

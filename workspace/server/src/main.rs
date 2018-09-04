@@ -34,7 +34,7 @@ use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
 use yew::format::{Text, Json};
-use wdview_msg::{WsMessage, Data, Command, Vector, Body};
+use wdview_msg::{WsMessage, Data, Command, Vector, Body, PlotParamForVector};
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -98,7 +98,11 @@ fn start_websocket_server() {
                     data: vec![1., 2., 3.],
                 }),
             });
-            let msg2 = WsMessage::Command(Command::Plot2D);
+            let msg2 = PlotParamForVector {
+                data_name: "3-dim vector".to_string(),
+                area_name: "plot_area".to_string(),
+            }.into_wsmsg();
+
             let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
             let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
             println!("Following messages will be sent for debug");
