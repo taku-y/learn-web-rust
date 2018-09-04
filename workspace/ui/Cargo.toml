@@ -10,3 +10,4 @@ serde_derive = "1"
 serde_json = "1.0.26"
 failure = "0.1"
 wdview_msg = { path = "../wdview_msg" }
+stdweb = "0.4"
