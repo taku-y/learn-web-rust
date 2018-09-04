@@ -22,6 +22,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+use std::io;
 use std::thread;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -45,15 +46,18 @@ fn all_routes() -> Vec<rocket::Route> {
 
 /// This is the entry point for our yew client side app.
 #[get("/")]
-fn index(db: State<Arc<sled::Tree>>) -> Markup {
-    // maud macro
-    html! {
-        // link rel="stylesheet" href="static/styles.css" {}
-        body {}
-        // yew-generated javascript attaches to <body>
-        script src=("static/ui.js") {}
-    }
+fn index() -> io::Result<NamedFile> {
+    NamedFile::open("static/index.html")
 }
+//fn index(db: State<Arc<sled::Tree>>) -> Markup {
+//    // maud macro
+//    html! {
+//        link rel="stylesheet" href="static/styles.css" {}
+//        body {}
+//        // yew-generated javascript attaches to <body>
+//        script src=("static/ui.js") {}
+//    }
+//}
 
 /// Serve static assets from the "static" folder.
 #[get("/static/<path..>")]

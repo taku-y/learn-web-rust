@@ -85,6 +85,7 @@ impl Component for Model {
                 match wsmsg {
                     WsMessage::Data(data) => {
                         self.console.info(&format!("{:?}", &data));
+                        self.data.insert(data.name.clone(), data);
                     }
                     WsMessage::Command(command) => {
                         self.console.info(&format!("{:?}", &command));
@@ -92,34 +93,6 @@ impl Component for Model {
                     WsMessage::Ignore => {
                         self.console.info(&format!("Ignore"));
                     }
-//                    WsAction::Connect => {
-//                        let callback = self.link.send_back(|Json(data)| Msg::WsReady(data));
-//                        let notification = self.link.send_back(|status| {
-//                            match status {
-//                                WebSocketStatus::Opened => Msg::Ignore,
-//                                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
-//                            }
-//                        });
-//                        let task = self.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
-//                        self.ws = Some(task);
-//                    }
-//                    WsAction::SendData(binary) => {
-//                        let request = WsRequest {
-//                            value: 321,
-//                        };
-//                        if binary {
-//                            self.ws.as_mut().unwrap().send_binary(Json(&request));
-//                        } else {
-//                            self.ws.as_mut().unwrap().send(Json(&request));
-//                        }
-//                    }
-//                    WsAction::Disconnect => {
-//                        self.ws.take().unwrap().cancel();
-//                    }
-//                    WsAction::Lost => {
-//                        self.ws = None;
-//                    }
-//                }
                 }
             }
             ModelMessage::UiMessage(_) => {
@@ -129,14 +102,6 @@ impl Component for Model {
                 self.console.info(&format!("Ignore"));
             }
         }
-//            Msg::WsReady(response) => {
-//                self.console.info(&format!("{:?}", response));
-//                self.data = response.map(|data| data.value).ok();
-//            }
-//            Msg::Ignore => {
-//                return false;
-//            }
-
         true
     }
 }
