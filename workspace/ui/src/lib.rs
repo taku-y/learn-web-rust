@@ -13,7 +13,7 @@ use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use wdview_msg::{WsMessage, Data};
 pub mod msg;
-use msg::{ModelMessage};
+use msg::{ModelMessage, WsMessageForModel};
 
 pub struct Model {
     ws_service: WebSocketService,
@@ -21,22 +21,6 @@ pub struct Model {
     data: HashMap<String, Data>,
     ws: Option<WebSocketTask>,
     console: ConsoleService,
-}
-
-struct WsMessageForModel(WsMessage);
-
-impl From<Text> for WsMessageForModel {
-    fn from(text: Text) -> WsMessageForModel {
-        WsMessageForModel(
-            serde_json::from_str(&text.unwrap()).unwrap()
-        )
-    }
-}
-
-impl From<Binary> for WsMessageForModel {
-    fn from(bin: Binary) -> WsMessageForModel {
-        WsMessageForModel(WsMessage::Ignore)
-    }
 }
 
 impl Component for Model {
@@ -109,22 +93,15 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
-            <div>
-//                <nav class="menu",>
-//                     { self.view_data() }
-//                    <button disabled=self.ws.is_some(),
-//                            onclick=|_| WsAction::Connect.into(),>{ "Connect To WebSocket" }</button>
-//                    <button disabled=self.ws.is_none(),
-//                            onclick=|_| WsAction::SendData(false).into(),>{ "Send To WebSocket" }</button>
-//                    <button disabled=self.ws.is_none(),
-//                            onclick=|_| WsAction::SendData(true).into(),>{ "Send To WebSocket [binary]" }</button>
-//                    <button disabled=self.ws.is_none(),
-//                            onclick=|_| WsAction::Disconnect.into(),>{ "Close WebSocket connection" }</button>
-//                </nav>
-            </div>
+            <table style="overflow-y=scroll",>
+            {
+                for self.data.iter().map(|item| html! {
+                    <tr><td> { item.0 } </td></tr>
+                })
+            }
+            </table>
         }
     }
-
 }
 
 impl Model {
