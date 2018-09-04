@@ -1,5 +1,4 @@
 extern crate failure;
-#[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
@@ -10,13 +9,10 @@ extern crate wdview_msg;
 
 use std::collections::HashMap;
 use yew::prelude::*;
-use yew::format::{Json, Text, Binary};
-use yew::services::{Task, ConsoleService};
+use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use wdview_msg::{WsMessage, Data, Command, PlotParam, PlotParamForVector, Body};
 pub mod msg;
-use stdweb::traits::*;
-use stdweb::web::{INonElementParentNode, document, Element, INode, window};
 use msg::{ModelMessage, WsMessageForModel};
 
 pub struct Model {

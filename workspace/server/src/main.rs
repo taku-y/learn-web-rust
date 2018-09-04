@@ -26,15 +26,12 @@ use std::io;
 use std::thread;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use maud::{html, Markup};
 use rocket::response::NamedFile;
-use rocket::State;
 use sled::Tree;
 use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
-use yew::format::{Text, Json};
-use wdview_msg::{WsMessage, Data, Command, Vector, Body, PlotParamForVector};
+use wdview_msg::{WsMessage, Data, Vector, Body, PlotParamForVector};
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![

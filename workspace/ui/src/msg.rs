@@ -4,9 +4,8 @@ extern crate failure;
 extern crate serde_json;
 extern crate wdview_msg;
 
-use failure::Error;
 use yew::format::{Text, Binary};
-use wdview_msg::{WsMessage, Data, Command};
+use wdview_msg::WsMessage;
 
 pub enum UiMessage {
     Ignore,
@@ -29,7 +28,7 @@ impl From<Text> for WsMessageForModel {
 }
 
 impl From<Binary> for WsMessageForModel {
-    fn from(bin: Binary) -> WsMessageForModel {
+    fn from(_bin: Binary) -> WsMessageForModel {
         WsMessageForModel(WsMessage::Ignore)
     }
 }
