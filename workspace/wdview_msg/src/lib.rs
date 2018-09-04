@@ -14,6 +14,18 @@ pub enum WsMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
     pub name: String,
+    pub body: Body,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Body {
+    Vector(Vector),
+    Matrix
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Vector {
+    pub name_row: Option<Vec<String>>,
     pub data: Vec<f32>,
 }
 
