@@ -4,12 +4,18 @@
         <meta charset="utf-8">
         <title>Web Data View</title>
         <link rel="stylesheet" href="styles.css">
-        <!-- <script src="node_modules/plotly.js-dist/plotly.js"></script> -->
+         <script src="static/plotly-latest.min.js"></script>
     </head>
     <body>
         <script src="static/ui.js"></script>
-        <!--<div id="data_list" style="overflow-y: scroll">-->
-            <!--<table id="data_list_table"></table>-->
-        <!--</div>-->
+        <div id="data_list"></div>
+        <div id="tester" style="width:600px;height:250px;"></div>
+        <script>
+            TESTER = document.getElementById('tester');
+            Plotly.plot( TESTER, [{
+            x: [1, 2, 3, 4, 5],
+            y: [1, 2, 4, 8, 16] }], {
+            margin: { t: 0 } } );
+        </script>
     </body>
 </html>
