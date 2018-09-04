@@ -3,6 +3,8 @@ extern crate failure;
 extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
+extern crate stdweb;
+#[macro_use]
 extern crate yew;
 extern crate wdview_msg;
 
@@ -11,14 +13,17 @@ use yew::prelude::*;
 use yew::format::{Json, Text, Binary};
 use yew::services::{Task, ConsoleService};
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-use wdview_msg::{WsMessage, Data};
+use wdview_msg::{WsMessage, Data, Command, PlotParam, PlotParamForVector, Body};
 pub mod msg;
+use stdweb::traits::*;
+use stdweb::web::{INonElementParentNode, document, Element, INode, window};
 use msg::{ModelMessage, WsMessageForModel};
 
 pub struct Model {
     ws_service: WebSocketService,
     link: ComponentLink<Model>,
     data: HashMap<String, Data>,
+    commands: Vec<Command>,
     ws: Option<WebSocketTask>,
     console: ConsoleService,
 }
@@ -35,6 +40,7 @@ impl Component for Model {
             ws_service: WebSocketService::new(),
             link,
             data: HashMap::new(),
+            commands: Vec::new(),
             ws: None,
             console: ConsoleService::new(),
         };
@@ -65,34 +71,75 @@ impl Component for Model {
         self.console.info("Model::update() was invoked");
 
         match msg {
-            ModelMessage::WsMessage(wsmsg) => {
-                match wsmsg {
-                    WsMessage::Data(data) => {
-                        self.console.info(&format!("{:?}", &data));
-                        self.data.insert(data.name.clone(), data);
-                    }
-                    WsMessage::Command(command) => {
-                        self.console.info(&format!("{:?}", &command));
-                    }
-                    WsMessage::Ignore => {
-                        self.console.info(&format!("Ignore"));
-                    }
-                }
-            }
-            ModelMessage::UiMessage(_) => {
-                self.console.info(&format!("UiMessage"));
-            }
-            ModelMessage::Ignore => {
-                self.console.info(&format!("Ignore"));
-            }
+            ModelMessage::WsMessage(wsmsg) => { process_wsmsg(self, wsmsg); }
+            ModelMessage::UiMessage(_) => { self.console.info(&format!("UiMessage")); }
+            ModelMessage::Ignore => { self.console.info(&format!("Ignore")); }
         }
         true
+    }
+}
+
+fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
+    model.console.info("Received Websocket Message");
+    model.console.info(&format!("{:?}", &wsmsg));
+
+    match wsmsg {
+        WsMessage::Data(data) => {
+            model.data.insert(data.name.clone(), data);
+        }
+        WsMessage::Command(command) => {
+            model.commands.push(command);
+            process_last_command(&model);
+        }
+        WsMessage::Ignore => {}
+    }
+}
+
+fn plot_for_vector(model: &Model, param: &PlotParamForVector) {
+    let data_body = &model.data.get(&param.data_name).unwrap().body;
+
+    match data_body {
+        Body::Vector(v) => {
+            let x: Vec<f32> = (0..v.data.len()).map(|x| x as f32).collect();
+            let y = &v.data;
+            let area_name = &param.area_name;
+
+            js! {
+                var elem = document.getElementById( @{ area_name });
+                Plotly.plot(
+                    elem, [{
+                        x: @{ x }, //[1, 2, 3, 4, 5],
+                        y: @{ y }
+                    }], { //[1, 2, 4, 8, 16] }], {
+                        margin: { t: 0 }
+                    }
+                );
+            }
+        }
+        _ => {} // TODO: make alert for type mismatch
+    }
+}
+
+fn process_last_command(model: &Model) {
+    let command = model.commands.last().unwrap();
+
+    use Command::*;
+    use PlotParam::*;
+
+    match command {
+        Plot(plot_param) => {
+            match plot_param {
+                PlotParamForVector(param) => { plot_for_vector(model, param); }
+            }
+        }
+        _ => {}
     }
 }
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
+            <div>
             <table style="overflow-y=scroll",>
             {
                 for self.data.iter().map(|item| html! {
@@ -100,6 +147,10 @@ impl Renderable<Model> for Model {
                 })
             }
             </table>
+            <script>
+                { "document.getElementById('plot_area').innerHTML = 'aaaa!';" }
+            </script>
+            </div>
         }
     }
 }

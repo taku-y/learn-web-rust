@@ -95,7 +95,7 @@ fn start_websocket_server() {
                 name: "3-dim vector".to_string(),
                 body: Body::Vector(Vector {
                     name_row: None,
-                    data: vec![1., 2., 3.],
+                    data: vec![4., 2., 8.],
                 }),
             });
             let msg2 = PlotParamForVector {
