@@ -31,7 +31,7 @@ use sled::Tree;
 use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::server::accept;
-use wdview_msg::{WsMessage, Data, Vector, Body, PlotParamForVector};
+use wdview_msg::{WsMessage, DataFrame, PlotParam};
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -88,16 +88,18 @@ fn start_websocket_server() {
             println!("websocket object was created");
 
             // Send a wdview message
-            let msg1 = WsMessage::Data(Data {
+            let msg1 = WsMessage::DataFrame(DataFrame {
                 name: "3-dim vector".to_string(),
-                body: Body::Vector(Vector {
-                    name_row: None,
-                    data: vec![4., 2., 8.],
-                }),
+                columns: vec!["x".to_string(), "y".to_string()],
+                index: vec![1, 2, 3, 4],
+                data: vec![vec![5.0, 6.0, 7.0, 8.0],
+                           vec![9.0, 12.0, 11.0, 10.0]],
             });
-            let msg2 = PlotParamForVector {
+            let msg2 = PlotParam {
                 data_name: "3-dim vector".to_string(),
                 area_name: "plot_area".to_string(),
+                col_name_x: "x".to_string(),
+                col_name_y: "y".to_string()
             }.into_wsmsg();
 
             let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());

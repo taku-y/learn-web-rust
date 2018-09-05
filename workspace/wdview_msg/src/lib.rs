@@ -6,36 +6,31 @@ extern crate serde_derive;
 // Message via WebSocket
 #[derive(Serialize, Deserialize, Debug)]
 pub enum WsMessage {
-    Data(Data),
+    DataFrame(DataFrame),
     Command(Command),
     Ignore,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Data {
+pub struct DataFrame {
+    // DataFrame meets conditions below:
+    // data.len() == columns.len()
+    // data[i].len() == index.len() for i = (0..columns.len())
     pub name: String,
-    pub body: Body,
+    pub columns: Vec<String>,
+    pub index: Vec<i64>,
+    pub data: Vec<Vec<f64>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Body {
-    Vector(Vector),
-    VectorPair(VectorPair),
-    Matrix
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Vector {
-    pub name_row: Option<Vec<String>>,
-    pub data: Vec<f32>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct VectorPair {
-    pub name_row_x: Option<Vec<String>>,
-    pub name_row_y: Option<Vec<String>>,
-    pub data_x: Vec<f32>,
-    pub data_y: Vec<f32>,
+impl DataFrame {
+    pub fn get_col(&self, col_name: &String) -> Option<&Vec<f64>> {
+        for i in 0..self.columns.len() {
+            if &self.columns[i] == col_name {
+                return Some(&self.data[i]);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -45,19 +40,16 @@ pub enum Command {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum PlotParam {
-    PlotParamForVector(PlotParamForVector),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PlotParamForVector {
+pub struct PlotParam {
     pub data_name: String,
     pub area_name: String,
+    pub col_name_x: String,
+    pub col_name_y: String,
 }
 
-impl PlotParamForVector {
+impl PlotParam {
     pub fn into_wsmsg(self) -> WsMessage {
-        WsMessage::Command(Command::Plot(PlotParam::PlotParamForVector(self)))
+        WsMessage::Command(Command::Plot(self))
     }
 }
 

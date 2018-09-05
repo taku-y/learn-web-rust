@@ -11,14 +11,14 @@ use std::collections::HashMap;
 use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-use wdview_msg::{WsMessage, Data, Command, PlotParam, PlotParamForVector, Body};
+use wdview_msg::{WsMessage, DataFrame, Command, PlotParam};
 pub mod msg;
 use msg::{ModelMessage, WsMessageForModel};
 
 pub struct Model {
     ws_service: WebSocketService,
     link: ComponentLink<Model>,
-    data: HashMap<String, Data>,
+    data: HashMap<String, DataFrame>,
     commands: Vec<Command>,
     ws: Option<WebSocketTask>,
     console: ConsoleService,
@@ -80,8 +80,8 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     model.console.info(&format!("{:?}", &wsmsg));
 
     match wsmsg {
-        WsMessage::Data(data) => {
-            model.data.insert(data.name.clone(), data);
+        WsMessage::DataFrame(df) => {
+            model.data.insert(df.name.clone(), df);
         }
         WsMessage::Command(command) => {
             model.commands.push(command);
@@ -91,43 +91,31 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     }
 }
 
-fn plot_for_vector(model: &Model, param: &PlotParamForVector) {
-    let data_body = &model.data.get(&param.data_name).unwrap().body;
+fn plot(model: &Model, param: &PlotParam) {
+    let df = &model.data.get(&param.data_name).unwrap();
+    let xs = df.get_col(&param.col_name_x).unwrap();
+    let ys = df.get_col(&param.col_name_y).unwrap();
 
-    match data_body {
-        Body::Vector(v) => {
-            let x: Vec<f32> = (0..v.data.len()).map(|x| x as f32).collect();
-            let y = &v.data;
-            let area_name = &param.area_name;
-
-            js! {
-                var elem = document.getElementById( @{ area_name });
-                Plotly.plot(
-                    elem, [{
-                        x: @{ x }, //[1, 2, 3, 4, 5],
-                        y: @{ y }
-                    }], { //[1, 2, 4, 8, 16] }], {
-                        margin: { t: 0 }
-                    }
-                );
+    js! {
+        var elem = document.getElementById( @{ &param.area_name });
+        Plotly.plot(
+            elem, [{
+                x: @{ &xs },
+                y: @{ &ys }
+            }], {
+                margin: { t: 0 }
             }
-        }
-        _ => {} // TODO: make alert for type mismatch
+        );
     }
 }
 
 fn process_last_command(model: &Model) {
     let command = model.commands.last().unwrap();
 
-    use Command::*;
-    use PlotParam::*;
+    use Command::{Plot};
 
     match command {
-        Plot(plot_param) => {
-            match plot_param {
-                PlotParamForVector(param) => { plot_for_vector(model, param); }
-            }
-        }
+        Plot(plot_param) => { plot(model, plot_param); }
         _ => {}
     }
 }
