@@ -2,12 +2,17 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate failure;
 
 // Message via WebSocket
 #[derive(Serialize, Deserialize, Debug)]
 pub enum WsMessage {
     DataFrame(DataFrame),
     Command(Command),
+    Connect(Connect),
+    WhoAreYou,
+    IAmUI,
+    IAmClient,
     Ignore,
 }
 
@@ -40,6 +45,11 @@ pub enum Command {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Connect {
+    pub address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PlotParam {
     pub data_name: String,
     pub area_name: String,
@@ -60,3 +70,9 @@ impl PlotParam {
 //        assert_eq!(2 + 2, 4);
 //    }
 //}
+
+impl From<WsMessage> for Result<String, failure::Error> {
+    fn from(msg: WsMessage) -> Result<String, failure::Error> {
+        Ok(serde_json::to_string(&msg).unwrap())
+    }
+}

@@ -11,16 +11,24 @@ use std::collections::HashMap;
 use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
+use yew::format::Text;
 use wdview_msg::{WsMessage, DataFrame, Command, PlotParam};
 pub mod msg;
 use msg::{ModelMessage, WsMessageForModel};
+use std::thread;
+use stdweb::web::WebSocket;
 
 pub struct Model {
-    ws_service: WebSocketService,
     link: ComponentLink<Model>,
     data: HashMap<String, DataFrame>,
     commands: Vec<Command>,
-    ws: Option<WebSocketTask>,
+//    ws_thread: thread::JoinHandle<()>,
+//    ws_service: WebSocketService,
+    ws_server: WebSocketTask,
+    ws_client: Option<WebSocketTask>,
+//    ws: Option<WebSocketTask>,
+//    ws_service_client: WebSocketService,
+//    ws_client: Option<WebSocketTask>,
     console: ConsoleService,
 }
 
@@ -28,40 +36,57 @@ impl Component for Model {
     type Message = ModelMessage;
     type Properties = ();
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let mut console = ConsoleService::new();
         console.info("Model::create() was invoked");
 
+        // Open websocket for accepting connection request from client of the viewer
+        let server_address = "ws://0.0.0.0:9001";
+        let callback = link.send_back(
+            |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
+        );
+//        let callback = | WsMessageForModel(msg) | {
+//            let mut console = ConsoleService::new();
+//            console.info(&format!("{:?}", &msg));
+//        };
+        let notification = link.send_back(|_status| { ModelMessage::Ignore });
+        let ws_server = WebSocketService::new().connect(server_address, callback.into(),
+                                                        notification);
+        console.info("ws_thread was created");
+
         let mut model = Model {
-            ws_service: WebSocketService::new(),
-            link,
+            link: link,
             data: HashMap::new(),
             commands: Vec::new(),
-            ws: None,
+//            ws_service: WebSocketService::new(),
+            ws_server,
+            ws_client: None,
             console: ConsoleService::new(),
         };
         console.info("Model was created");
-
-        // Open websocket connection with callback
-        let callback = model.link.send_back(
-            |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
-        );
-        let notification = model.link.send_back(|status| {
-            match status {
-                WebSocketStatus::Opened => ModelMessage::Ignore,
-                WebSocketStatus::Closed | WebSocketStatus::Error => ModelMessage::Ignore,
-//                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
-
-            }
-        });
-        console.info("Closures were created");
-        // TODO: Set websocket server address when accessing HTTP server
-        let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
-        model.ws = Some(task);
-        console.info("Handshake");
-
         model
     }
+
+//        // Open websocket connection with callback
+//        let callback = model.link.send_back(
+//            |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
+//        );
+//        let notification = model.link.send_back(|status| {
+//            match status {
+//                WebSocketStatus::Opened => ModelMessage::Ignore,
+//                WebSocketStatus::Closed | WebSocketStatus::Error => ModelMessage::Ignore,
+////                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+//
+//            }
+//        });
+//        console.info("Closures were created");
+//        // TODO: Set websocket server address when accessing HTTP server
+//        let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
+//        model.ws = Some(task);
+//        console.info("Handshake");
+//
+//        model
+//    }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         self.console.info("Model::update() was invoked");
@@ -87,7 +112,20 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
             model.commands.push(command);
             process_last_command(&model);
         }
+        WsMessage::Connect(connect) => {
+            let client_address = connect.address;
+            let callback = model.link.send_back(
+                |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
+            );
+            let notification = model.link.send_back(|_status| { ModelMessage::Ignore });
+            model.ws_client = Some(WebSocketService::new().connect(
+                &client_address, callback.into(), notification
+            ));
+        }
+        WsMessage::WhoAreYou => { model.ws_server.send(WsMessage::IAmUI); }
         WsMessage::Ignore => {}
+        WsMessage::IAmUI => {}
+        WsMessage::IAmClient => {}
     }
 }
 

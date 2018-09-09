@@ -13,6 +13,7 @@ extern crate rocket_contrib;
 extern crate sled;
 extern crate tempdir;
 extern crate failure;
+extern crate url;
 extern crate tungstenite;
 extern crate yew;
 extern crate ui;
@@ -23,15 +24,32 @@ extern crate serde;
 extern crate serde_json;
 
 use std::io;
+use std::io::prelude::*;
 use std::thread;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, RwLock};
 use rocket::response::NamedFile;
 use sled::Tree;
-use std::net::TcpListener;
+use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
+//use std::option::Option;
 use tungstenite::server::accept;
-use wdview_msg::{WsMessage, DataFrame, PlotParam};
+use tungstenite::{Message, connect, WebSocket};
+use wdview_msg::{WsMessage, DataFrame, PlotParam, Connect};
+use url::Url;
+
+// https://users.rust-lang.org/t/rusts-equivalent-of-cs-system-pause/4494/2
+fn pause() {
+    let mut stdin = io::stdin();
+    let mut stdout = io::stdout();
+
+    // We want the cursor to stay at the end of the line, so we print without a newline and flush manually.
+    write!(stdout, "Press any key to continue...").unwrap();
+    stdout.flush().unwrap();
+
+    // Read a single byte and discard
+    let _ = stdin.read(&mut [0u8]).unwrap();
+}
 
 fn all_routes() -> Vec<rocket::Route> {
     routes![
@@ -78,57 +96,134 @@ fn start_web_server() {
     rocket::ignite().mount("/", routes).manage(db_arc).launch();
 }
 
-fn start_websocket_server() {
+fn who_are_you(websocket: &mut WebSocket<TcpStream>) -> WsMessage {
+    let msg = WsMessage::WhoAreYou;
+    let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
+    websocket.write_message(msg).unwrap();
+
+    let msg = websocket.read_message().unwrap();
+    serde_json::from_str(msg.to_text().unwrap()).unwrap()
+}
+
+fn start_wdv_server() {
     let server = TcpListener::bind("0.0.0.0:9001").unwrap();
+//    let ws_ui = Arc::new(RwLock::new(Option::None));
+    let ws_ui: Arc<Option<WebSocket<TcpStream>>> = Arc::new(Option::None);
+    let ws_client = Arc::new(Mutex::new(Option::None));
+
     for stream in server.incoming() {
-        println!("Message came");
-        spawn (move || {
-            // Handshake
-            let mut websocket = accept(stream.unwrap()).unwrap();
-            println!("websocket object was created");
+        let stream = stream.unwrap();
+        println!("Made a connection: {:?}", &stream);
 
-            // Send a wdview message
-            let msg1 = WsMessage::DataFrame(DataFrame {
-                name: "3-dim vector".to_string(),
-                columns: vec!["x".to_string(), "y".to_string()],
-                index: vec![1, 2, 3, 4],
-                data: vec![vec![5.0, 6.0, 7.0, 8.0],
-                           vec![9.0, 12.0, 11.0, 10.0]],
-            });
-            let msg2 = PlotParam {
-                data_name: "3-dim vector".to_string(),
-                area_name: "plot_area".to_string(),
-                col_name_x: "x".to_string(),
-                col_name_y: "y".to_string()
-            }.into_wsmsg();
+        let mut ws_ui_ = Arc::clone(&ws_ui);
+        let mut ws_client_ = Arc::clone(&ws_client);
 
-            let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
-            let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
-            println!("Following messages will be sent for debug");
-            println!("{:?}", &msg1);
-            println!("{:?}", &msg2);
-            websocket.write_message(msg1).unwrap();
-            websocket.write_message(msg2).unwrap();
+        spawn(move || {
+            let mut websocket = accept(stream).unwrap();
+            match who_are_you(&mut websocket) {
+                WsMessage::IAmUI => {
+                    {
+//                        let mut ws_ui = ws_ui_.lock().unwrap();
+//                        let mut ws_ui = ws_ui_;
+                        let mut ws_ui = ws_ui_.write().unwrap();
+                        *ws_ui = Some(websocket);
+                        println!("from UI");
+                    }
 
-            // Websocket vent loop
-            loop {
-                let msg = websocket.read_message().unwrap();
-                println!("Received: {:?}", msg);
-                if msg.is_binary() || msg.is_text() {
-                    websocket.write_message(msg).unwrap();
+                    loop {
+                        let mut ws_ui = ws_ui_.write().unwrap();
+                        let msg = ws_ui.as_mut().unwrap().read_message().unwrap();
+                        println!("Received: {:?} from UI, ignored", &msg);
+                    }
                 }
+                WsMessage::IAmClient => {
+                    {
+                        let mut ws_client = ws_client_.lock().unwrap();
+                        *ws_client = Some(websocket);
+                        println!("from client");
+                    }
+
+                    loop {
+                        let mut ws_client = ws_client_.lock().unwrap();
+                        let msg = (*ws_client).as_mut().unwrap().read_message().unwrap();
+                        println!("Received: {:?} from client, send to UI", msg);
+
+//                        let mut ws_ui = ws_ui_.read().unwrap();
+//                        (*ws_ui).as_mut().unwrap().write_message(msg).unwrap();
+//                        println!("Sent");
+                    }
+                }
+                _ => {}
+            };
+        });
+    };
+}
+
+//        spawn (move || {
+//            // Handshake
+//            let stream = stream.unwrap();
+//            println!("{:?}", &stream);
+//            let mut websocket = accept(stream).unwrap();
+//
+//            let msg = WsMessage::WhoAreYou;
+//            let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
+//            websocket.write_message(msg).unwrap();
+//
+//            // Send a wdview message
+//            let msg1 = WsMessage::DataFrame(DataFrame {
+//                name: "3-dim vector".to_string(),
+//                columns: vec!["x".to_string(), "y".to_string()],
+//                index: vec![1, 2, 3, 4],
+//                data: vec![vec![5.0, 6.0, 7.0, 8.0],
+//                           vec![9.0, 12.0, 11.0, 10.0]],
+//            });
+//            let msg2 = PlotParam {
+//                data_name: "3-dim vector".to_string(),
+//                area_name: "plot_area".to_string(),
+//                col_name_x: "x".to_string(),
+//                col_name_y: "y".to_string()
+//            }.into_wsmsg();
+//
+//            let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
+//            let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
+//            println!("Following messages will be sent for debug");
+//            println!("{:?}", &msg1);
+//            println!("{:?}", &msg2);
+//            websocket.write_message(msg1).unwrap();
+//            websocket.write_message(msg2).unwrap();
+
 //                let msg = WsResponse{ value: 333 };
 //                let msg: Text = Json(&msg).into();
 //                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
 //                println!("Sent message: {:?}", msg);
 //                websocket.write_message(msg).unwrap();
-            }
-        });
-    }
-}
+//            }
+//        });
+//    }
+//}
 
 fn main() {
     thread::spawn(|| { start_web_server(); });
-    start_websocket_server();
-    //loop {};
+    thread::spawn(|| { start_wdv_server(); });
+
+    // Client of wdview
+    // Create TcpListener
+    let listener = TcpListener::bind("0.0.0.0:9002").unwrap();
+
+    // Wait key press
+    pause();
+
+    // Request for wdview server to get the client to connect to the UI by WebSocket
+    let (mut socket, response) = connect(Url::parse("ws://0.0.0.0:9001").unwrap())
+        .expect("Can't connect");
+    let msg = WsMessage::IAmClient;
+    let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
+    println!("{:?}", &msg);
+    socket.write_message(msg).unwrap();
+
+    let msg = WsMessage::Connect(Connect { address: "ws://0.0.0.0:9002".to_string() });
+    let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
+    socket.write_message(msg).unwrap();
+
+    loop {};
 }
