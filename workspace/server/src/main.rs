@@ -27,7 +27,7 @@ use std::io;
 use std::io::prelude::*;
 use std::thread;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use rocket::response::NamedFile;
 use sled::Tree;
 use std::net::{TcpListener, TcpStream};
@@ -107,8 +107,7 @@ fn who_are_you(websocket: &mut WebSocket<TcpStream>) -> WsMessage {
 
 fn start_wdv_server() {
     let server = TcpListener::bind("0.0.0.0:9001").unwrap();
-//    let ws_ui = Arc::new(RwLock::new(Option::None));
-    let ws_ui: Arc<Option<WebSocket<TcpStream>>> = Arc::new(Option::None);
+    let ws_ui = Arc::new(Mutex::new(Option::None));
     let ws_client = Arc::new(Mutex::new(Option::None));
 
     for stream in server.incoming() {
@@ -120,37 +119,37 @@ fn start_wdv_server() {
 
         spawn(move || {
             let mut websocket = accept(stream).unwrap();
+
             match who_are_you(&mut websocket) {
                 WsMessage::IAmUI => {
                     {
-//                        let mut ws_ui = ws_ui_.lock().unwrap();
-//                        let mut ws_ui = ws_ui_;
-                        let mut ws_ui = ws_ui_.write().unwrap();
+                        let mut ws_ui = ws_ui_.lock().unwrap();
                         *ws_ui = Some(websocket);
                         println!("from UI");
                     }
 
-                    loop {
-                        let mut ws_ui = ws_ui_.write().unwrap();
-                        let msg = ws_ui.as_mut().unwrap().read_message().unwrap();
-                        println!("Received: {:?} from UI, ignored", &msg);
-                    }
+                    // Just keep the websocket alive, used in the other thread
+                    loop {}
                 }
                 WsMessage::IAmClient => {
                     {
                         let mut ws_client = ws_client_.lock().unwrap();
                         *ws_client = Some(websocket);
                         println!("from client");
+
+                        // Unlock ws_client here
                     }
 
                     loop {
+                        // Wait a request from the client
                         let mut ws_client = ws_client_.lock().unwrap();
                         let msg = (*ws_client).as_mut().unwrap().read_message().unwrap();
                         println!("Received: {:?} from client, send to UI", msg);
 
-//                        let mut ws_ui = ws_ui_.read().unwrap();
-//                        (*ws_ui).as_mut().unwrap().write_message(msg).unwrap();
-//                        println!("Sent");
+                        // Send a request to the UI to make a websocket from the UI to the client
+                        let mut ws_ui = ws_ui_.lock().unwrap();
+                        (*ws_ui).as_mut().unwrap().write_message(msg).unwrap();
+                        println!("Sent");
                     }
                 }
                 _ => {}
@@ -208,7 +207,7 @@ fn main() {
 
     // Client of wdview
     // Create TcpListener
-    let listener = TcpListener::bind("0.0.0.0:9002").unwrap();
+    let client = TcpListener::bind("0.0.0.0:9002").unwrap();
 
     // Wait key press
     pause();
@@ -221,9 +220,16 @@ fn main() {
     println!("{:?}", &msg);
     socket.write_message(msg).unwrap();
 
+    // Send a request from the client to the UI to make a websocket
     let msg = WsMessage::Connect(Connect { address: "ws://0.0.0.0:9002".to_string() });
     let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
     socket.write_message(msg).unwrap();
 
-    loop {};
+    // Handshake with the UI
+    for stream in client.incoming() {
+        let stream = stream.unwrap();
+        println!("{:?}", &stream);
+        let mut websocket = accept(stream).unwrap();
+        loop {}
+    }
 }

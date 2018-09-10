@@ -118,9 +118,9 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
                 |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
             );
             let notification = model.link.send_back(|_status| { ModelMessage::Ignore });
-            model.ws_client = Some(WebSocketService::new().connect(
-                &client_address, callback.into(), notification
-            ));
+            model.ws_client = Some(WebSocketService::new().connect(&client_address,
+                                                                   callback.into(), notification));
+            model.console.info("Finished");
         }
         WsMessage::WhoAreYou => { model.ws_server.send(WsMessage::IAmUI); }
         WsMessage::Ignore => {}
