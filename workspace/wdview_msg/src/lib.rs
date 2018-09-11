@@ -63,6 +63,12 @@ impl PlotParam {
     }
 }
 
+impl From<WsMessage> for Result<String, failure::Error> {
+    fn from(msg: WsMessage) -> Result<String, failure::Error> {
+        Ok(serde_json::to_string(&msg).unwrap())
+    }
+}
+
 //#[cfg(test)]
 //mod tests {
 //    #[test]
@@ -70,9 +76,3 @@ impl PlotParam {
 //        assert_eq!(2 + 2, 4);
 //    }
 //}
-
-impl From<WsMessage> for Result<String, failure::Error> {
-    fn from(msg: WsMessage) -> Result<String, failure::Error> {
-        Ok(serde_json::to_string(&msg).unwrap())
-    }
-}

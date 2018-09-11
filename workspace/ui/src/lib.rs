@@ -22,13 +22,8 @@ pub struct Model {
     link: ComponentLink<Model>,
     data: HashMap<String, DataFrame>,
     commands: Vec<Command>,
-//    ws_thread: thread::JoinHandle<()>,
-//    ws_service: WebSocketService,
     ws_server: WebSocketTask,
-    ws_client: Option<WebSocketTask>,
-//    ws: Option<WebSocketTask>,
-//    ws_service_client: WebSocketService,
-//    ws_client: Option<WebSocketTask>,
+    ws_client: Option<WebSocketTask>, // client will come later thus be Option
     console: ConsoleService,
 }
 
@@ -45,10 +40,6 @@ impl Component for Model {
         let callback = link.send_back(
             |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
         );
-//        let callback = | WsMessageForModel(msg) | {
-//            let mut console = ConsoleService::new();
-//            console.info(&format!("{:?}", &msg));
-//        };
         let notification = link.send_back(|_status| { ModelMessage::Ignore });
         let ws_server = WebSocketService::new().connect(server_address, callback.into(),
                                                         notification);
@@ -58,7 +49,6 @@ impl Component for Model {
             link: link,
             data: HashMap::new(),
             commands: Vec::new(),
-//            ws_service: WebSocketService::new(),
             ws_server,
             ws_client: None,
             console: ConsoleService::new(),
@@ -66,27 +56,6 @@ impl Component for Model {
         console.info("Model was created");
         model
     }
-
-//        // Open websocket connection with callback
-//        let callback = model.link.send_back(
-//            |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
-//        );
-//        let notification = model.link.send_back(|status| {
-//            match status {
-//                WebSocketStatus::Opened => ModelMessage::Ignore,
-//                WebSocketStatus::Closed | WebSocketStatus::Error => ModelMessage::Ignore,
-////                WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
-//
-//            }
-//        });
-//        console.info("Closures were created");
-//        // TODO: Set websocket server address when accessing HTTP server
-//        let task = model.ws_service.connect("ws://0.0.0.0:9001/", callback, notification);
-//        model.ws = Some(task);
-//        console.info("Handshake");
-//
-//        model
-//    }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         self.console.info("Model::update() was invoked");
@@ -176,22 +145,3 @@ impl Renderable<Model> for Model {
         }
     }
 }
-
-//impl Model {
-//    fn view_data(&self) -> Html<Model> {
-//        html! {
-//            <p>{ "Data hasn't fetched yet." }</p>
-//        }
-////        if let Some(value) = self.data {
-////            html! {
-////                <p>{ value }</p>
-////            }
-////        } else {
-////            html! {
-////                <p>{ "Data hasn't fetched yet." }</p>
-////            }
-////        }
-//    }
-//
-//
-//}

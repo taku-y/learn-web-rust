@@ -32,7 +32,6 @@ use rocket::response::NamedFile;
 use sled::Tree;
 use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
-//use std::option::Option;
 use tungstenite::server::accept;
 use tungstenite::{Message, connect, WebSocket};
 use wdview_msg::{WsMessage, DataFrame, PlotParam, Connect};
@@ -157,49 +156,6 @@ fn start_wdv_server() {
         });
     };
 }
-
-//        spawn (move || {
-//            // Handshake
-//            let stream = stream.unwrap();
-//            println!("{:?}", &stream);
-//            let mut websocket = accept(stream).unwrap();
-//
-//            let msg = WsMessage::WhoAreYou;
-//            let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
-//            websocket.write_message(msg).unwrap();
-//
-//            // Send a wdview message
-//            let msg1 = WsMessage::DataFrame(DataFrame {
-//                name: "3-dim vector".to_string(),
-//                columns: vec!["x".to_string(), "y".to_string()],
-//                index: vec![1, 2, 3, 4],
-//                data: vec![vec![5.0, 6.0, 7.0, 8.0],
-//                           vec![9.0, 12.0, 11.0, 10.0]],
-//            });
-//            let msg2 = PlotParam {
-//                data_name: "3-dim vector".to_string(),
-//                area_name: "plot_area".to_string(),
-//                col_name_x: "x".to_string(),
-//                col_name_y: "y".to_string()
-//            }.into_wsmsg();
-//
-//            let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
-//            let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
-//            println!("Following messages will be sent for debug");
-//            println!("{:?}", &msg1);
-//            println!("{:?}", &msg2);
-//            websocket.write_message(msg1).unwrap();
-//            websocket.write_message(msg2).unwrap();
-
-//                let msg = WsResponse{ value: 333 };
-//                let msg: Text = Json(&msg).into();
-//                let msg = tungstenite::protocol::Message::Text(msg.unwrap());
-//                println!("Sent message: {:?}", msg);
-//                websocket.write_message(msg).unwrap();
-//            }
-//        });
-//    }
-//}
 
 fn send_test_message<T>(websocket: &mut WebSocket<T>)
     where T: std::io::Read + std::io::Write {
