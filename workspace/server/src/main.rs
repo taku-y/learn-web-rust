@@ -34,7 +34,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use tungstenite::server::accept;
 use tungstenite::{Message, connect, WebSocket};
-use wdview_msg::{WsMessage, DataFrame, PlotParam, Connect};
+use wdview_msg::{WsMessage, DataFrame, PlotParam, PlotParamArray, Connect};
 use url::Url;
 
 // https://users.rust-lang.org/t/rusts-equivalent-of-cs-system-pause/4494/2
@@ -167,16 +167,18 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
         data: vec![vec![5.0, 6.0, 7.0, 8.0],
                    vec![9.0, 12.0, 11.0, 10.0]],
     });
-    let msg2 = PlotParam {
-        data_name: "3-dim vector".to_string(),
-        area_name: "plot_area".to_string(),
-        col_name_x: "x".to_string(),
-        col_name_y: "y".to_string()
-    }.into_wsmsg();
+    let msg2 = PlotParamArray(vec![
+        PlotParam {
+            data_name: "3-dim vector".to_string(),
+            area_name: "plot_area".to_string(),
+            col_name_x: "x".to_string(),
+            col_name_y: "y".to_string()
+        },
+    ]).into_command();
 
     let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
     let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
-    println!("Following messages will be sent for debug");
+    println!("Following messages will be sent");
     println!("{:?}", &msg1);
     println!("{:?}", &msg2);
     websocket.write_message(msg1).unwrap();

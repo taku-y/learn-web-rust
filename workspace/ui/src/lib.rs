@@ -12,7 +12,7 @@ use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use yew::format::Text;
-use wdview_msg::{WsMessage, DataFrame, Command, PlotParam};
+use wdview_msg::{WsMessage, DataFrame, Command, PlotParam, PlotParamArray};
 pub mod msg;
 use msg::{ModelMessage, WsMessageForModel};
 use std::thread;
@@ -98,7 +98,8 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     }
 }
 
-fn plot(model: &Model, param: &PlotParam) {
+fn plot(model: &Model, params: &PlotParamArray) {
+    let param = &params.0[0];
     let df = &model.data.get(&param.data_name).unwrap();
     let xs = df.get_col(&param.col_name_x).unwrap();
     let ys = df.get_col(&param.col_name_y).unwrap();
@@ -122,7 +123,7 @@ fn process_last_command(model: &Model) {
     use Command::{Plot};
 
     match command {
-        Plot(plot_param) => { plot(model, plot_param); }
+        Plot(plot_params) => { plot(model, plot_params); }
         _ => {}
     }
 }
