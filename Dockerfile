@@ -60,6 +60,9 @@ RUN /bin/bash -c 'source ~/.nvm/nvm.sh && npm install -g plotly.js-dist'
 # Cargo-web
 RUN source /root/.cargo/env && cargo install cargo-web
 
+# Nightly Rust
+RUN /root/.cargo/bin/rustup default nightly
+
 # Cleanup
 RUN rm -rf /var/lib/apt/lists/*
 
