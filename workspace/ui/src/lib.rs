@@ -139,9 +139,6 @@ impl Renderable<Model> for Model {
                 })
             }
             </table>
-            <script>
-                { "document.getElementById('plot_area').innerHTML = 'aaaa!';" }
-            </script>
             </div>
         }
     }
