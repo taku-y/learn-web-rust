@@ -1,6 +1,9 @@
 extern crate failure;
-extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+
 #[macro_use]
 extern crate stdweb;
 #[macro_use]
@@ -98,19 +101,37 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     }
 }
 
+#[derive(Serialize)]
+struct PlotlyDataArray(Vec<PlotlyData>);
+
+#[derive(Serialize)]
+struct PlotlyData {
+    x: Vec<f64>,
+    y: Vec<f64>,
+}
+
+js_serializable!( PlotlyData );
+js_serializable!( PlotlyDataArray );
+
 fn plot(model: &Model, params: &PlotParamArray) {
-    let param = &params.0[0];
-    let df = &model.data.get(&param.data_name).unwrap();
-    let xs = df.get_col(&param.col_name_x).unwrap();
-    let ys = df.get_col(&param.col_name_y).unwrap();
+    let data = PlotlyDataArray(
+        params.0.iter().map(|param| {
+            let df = &model.data.get(&param.data_name).unwrap();
+            PlotlyData {
+                x: df.get_col(&param.col_name_x).unwrap().clone(),
+                y: df.get_col(&param.col_name_y).unwrap().clone(),
+            }
+        }).collect()
+    );
+
+    // TODO: Move area_name to "layout" variable
+    let area_name = &params.0[0].area_name;
 
     js! {
-        var elem = document.getElementById( @{ &param.area_name });
         Plotly.plot(
-            elem, [{
-                x: @{ &xs },
-                y: @{ &ys }
-            }], {
+            document.getElementById(@{ &area_name }),
+            @{ data },
+            {
                 margin: { t: 0 }
             }
         );
