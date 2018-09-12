@@ -168,11 +168,19 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
                    vec![9.0, 12.0, 11.0, 10.0]],
     });
     let msg2 = PlotParamArray(vec![
+        // 1st trace
         PlotParam {
             data_name: "3-dim vector".to_string(),
             area_name: "plot_area".to_string(),
             col_name_x: "x".to_string(),
             col_name_y: "y".to_string()
+        },
+        // 2nd trace
+        PlotParam {
+            data_name: "3-dim vector".to_string(),
+            area_name: "plot_area".to_string(),
+            col_name_x: "y".to_string(),
+            col_name_y: "x".to_string()
         },
     ]).into_command();
 
