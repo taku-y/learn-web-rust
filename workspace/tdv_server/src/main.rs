@@ -16,8 +16,8 @@ extern crate failure;
 extern crate url;
 extern crate tungstenite;
 extern crate yew;
-extern crate ui;
-extern crate wdview_msg;
+extern crate tdv_ui;
+extern crate tdv_msg;
 
 extern crate serde_derive;
 extern crate serde;
@@ -34,7 +34,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use tungstenite::server::accept;
 use tungstenite::{connect, WebSocket};
-use wdview_msg::{WsMessage, DataFrame, Trace, PlotParam, Connect};
+use tdv_msg::{WsMessage, DataFrame, Trace, PlotParam, Connect};
 use url::Url;
 
 // https://users.rust-lang.org/t/rusts-equivalent-of-cs-system-pause/4494/2
@@ -81,9 +81,9 @@ fn static_file(path: PathBuf) -> Option<NamedFile> {
 
 // TODO: remove this when we figure out how to change the native Rust
 // WebAssembly's generated JavaScript code to point at "static/" prefix.
-#[get("/ui.wasm")]
+#[get("/tdv_ui.wasm")]
 fn ugly_hack() -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/ui.wasm")).ok()
+    NamedFile::open(Path::new("static/tdv_ui.wasm")).ok()
 }
 
 fn start_web_server() {

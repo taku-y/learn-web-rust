@@ -8,14 +8,14 @@ extern crate serde_derive;
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
-extern crate wdview_msg;
+extern crate tdv_msg;
 
 use std::collections::HashMap;
 use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use yew::format::Text;
-use wdview_msg::{WsMessage, DataFrame, Command, PlotParam};
+use tdv_msg::{WsMessage, DataFrame, Command, PlotParam};
 pub mod msg;
 use msg::{ModelMessage, WsMessageForModel};
 use std::thread;

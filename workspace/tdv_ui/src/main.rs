@@ -1,10 +1,10 @@
 extern crate yew;
 extern crate stdweb;
-extern crate ui;
+extern crate tdv_ui;
 
 use yew::prelude::*;
 use stdweb::web::{INonElementParentNode, document};
-use ui::Model;
+use tdv_ui::Model;
 
 fn main() {
     yew::initialize();

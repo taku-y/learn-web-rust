@@ -1,5 +1,5 @@
 [package]
-name = "server"
+name = "tdv_server"
 version = "0.1.0"
 authors = ["root"]
 
@@ -17,8 +17,8 @@ failure = "0.1"
 url = "1.7.0"
 tungstenite = "0.5.2"
 yew = { git = "https://github.com/DenisKolodin/yew.git", branch = "master" }
-ui = { path = "../ui" }
-wdview_msg = { path = "../wdview_msg" }
+tdv_ui = { path = "../tdv_ui" }
+tdv_msg = { path = "../tdv_msg" }
 
 [dependencies.maud]
 branch = "master"

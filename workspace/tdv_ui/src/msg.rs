@@ -2,10 +2,10 @@
 
 extern crate failure;
 extern crate serde_json;
-extern crate wdview_msg;
+extern crate tdv_msg;
 
 use yew::format::{Text, Binary};
-use wdview_msg::WsMessage;
+use tdv_msg::WsMessage;
 
 pub enum UiMessage {
     Ignore,
