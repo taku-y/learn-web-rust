@@ -33,7 +33,7 @@ use sled::Tree;
 use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use tungstenite::server::accept;
-use tungstenite::{Message, connect, WebSocket};
+use tungstenite::{connect, WebSocket};
 use wdview_msg::{WsMessage, DataFrame, Trace, PlotParam, Connect};
 use url::Url;
 
