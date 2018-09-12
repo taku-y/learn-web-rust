@@ -15,7 +15,7 @@ use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
 use yew::format::Text;
-use wdview_msg::{WsMessage, DataFrame, Command, PlotParam, PlotParamArray};
+use wdview_msg::{WsMessage, DataFrame, Command, PlotParam};
 pub mod msg;
 use msg::{ModelMessage, WsMessageForModel};
 use std::thread;
@@ -113,10 +113,10 @@ struct PlotlyData {
 js_serializable!( PlotlyData );
 js_serializable!( PlotlyDataArray );
 
-fn plot(model: &Model, params: &PlotParamArray) {
+fn plot(model: &Model, params: &PlotParam) {
     let data = PlotlyDataArray(
-        params.0.iter().map(|param| {
-            let df = &model.data.get(&param.data_name).unwrap();
+        params.traces.iter().map(|param| {
+            let df = &model.data.get(&param.df_name).unwrap();
             PlotlyData {
                 x: df.get_col(&param.col_name_x).unwrap().clone(),
                 y: df.get_col(&param.col_name_y).unwrap().clone(),
@@ -125,7 +125,7 @@ fn plot(model: &Model, params: &PlotParamArray) {
     );
 
     // TODO: Move area_name to "layout" variable
-    let area_name = &params.0[0].area_name;
+    let area_name = &params.area_name;
 
     js! {
         Plotly.plot(

@@ -40,8 +40,7 @@ impl DataFrame {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Command {
-    Plot(PlotParamArray),
-    ScatterPlot,
+    Plot(PlotParam),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,16 +50,18 @@ pub struct Connect {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PlotParam {
-    pub data_name: String,
     pub area_name: String,
+    pub traces: Vec<Trace>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Trace {
+    pub df_name: String,
     pub col_name_x: String,
     pub col_name_y: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PlotParamArray(pub Vec<PlotParam>);
-
-impl PlotParamArray {
+impl PlotParam {
     pub fn into_command(self) -> WsMessage {
         WsMessage::Command(Command::Plot(self))
     }

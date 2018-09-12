@@ -34,7 +34,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use tungstenite::server::accept;
 use tungstenite::{Message, connect, WebSocket};
-use wdview_msg::{WsMessage, DataFrame, PlotParam, PlotParamArray, Connect};
+use wdview_msg::{WsMessage, DataFrame, Trace, PlotParam, Connect};
 use url::Url;
 
 // https://users.rust-lang.org/t/rusts-equivalent-of-cs-system-pause/4494/2
@@ -167,22 +167,23 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
         data: vec![vec![5.0, 6.0, 7.0, 8.0],
                    vec![9.0, 12.0, 11.0, 10.0]],
     });
-    let msg2 = PlotParamArray(vec![
-        // 1st trace
-        PlotParam {
-            data_name: "3-dim vector".to_string(),
-            area_name: "plot_area".to_string(),
-            col_name_x: "x".to_string(),
-            col_name_y: "y".to_string()
-        },
-        // 2nd trace
-        PlotParam {
-            data_name: "3-dim vector".to_string(),
-            area_name: "plot_area".to_string(),
-            col_name_x: "y".to_string(),
-            col_name_y: "x".to_string()
-        },
-    ]).into_command();
+    let msg2 = PlotParam {
+        area_name: "plot_area".to_string(),
+        traces: vec![
+            // 1st trace
+            Trace {
+                df_name: "3-dim vector".to_string(),
+                col_name_x: "x".to_string(),
+                col_name_y: "y".to_string()
+            },
+            // 2nd trace
+            Trace {
+                df_name: "3-dim vector".to_string(),
+                col_name_x: "y".to_string(),
+                col_name_y: "x".to_string()
+            },
+        ]
+    }.into_command();
 
     let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
     let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
