@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 extern crate failure;
 extern crate serde;
 extern crate serde_json;
@@ -10,16 +12,19 @@ extern crate stdweb;
 extern crate yew;
 extern crate tdv_msg;
 
+pub mod msg;
+pub mod plot;
+
 use std::collections::HashMap;
 use yew::prelude::*;
 use yew::services::ConsoleService;
-use yew::services::websocket::{WebSocketService, WebSocketTask, WebSocketStatus};
-use yew::format::Text;
-use tdv_msg::{WsMessage, DataFrame, Command, PlotParam};
-pub mod msg;
+use yew::services::websocket::{WebSocketService, WebSocketTask};
+//use yew::format::Text;
+use tdv_msg::{WsMessage, DataFrame, Command};
 use msg::{ModelMessage, WsMessageForModel};
-use std::thread;
-use stdweb::web::WebSocket;
+//use std::thread;
+//use stdweb::web::WebSocket;
+use plot::plot;
 
 pub struct Model {
     link: ComponentLink<Model>,
@@ -48,7 +53,7 @@ impl Component for Model {
                                                         notification);
         console.info("ws_thread was created");
 
-        let mut model = Model {
+        let model = Model {
             link: link,
             data: HashMap::new(),
             commands: Vec::new(),
@@ -101,51 +106,13 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     }
 }
 
-#[derive(Serialize)]
-struct PlotlyDataArray(Vec<PlotlyData>);
-
-#[derive(Serialize)]
-struct PlotlyData {
-    x: Vec<f64>,
-    y: Vec<f64>,
-}
-
-js_serializable!( PlotlyData );
-js_serializable!( PlotlyDataArray );
-
-fn plot(model: &Model, params: &PlotParam) {
-    let data = PlotlyDataArray(
-        params.traces.iter().map(|param| {
-            let df = &model.data.get(&param.df_name).unwrap();
-            PlotlyData {
-                x: df.get_col(&param.col_name_x).unwrap().clone(),
-                y: df.get_col(&param.col_name_y).unwrap().clone(),
-            }
-        }).collect()
-    );
-
-    // TODO: Move area_name to "layout" variable
-    let area_name = &params.area_name;
-
-    js! {
-        Plotly.plot(
-            document.getElementById(@{ &area_name }),
-            @{ data },
-            {
-                margin: { t: 0 }
-            }
-        );
-    }
-}
-
 fn process_last_command(model: &Model) {
     let command = model.commands.last().unwrap();
 
     use Command::{Plot};
 
     match command {
-        Plot(plot_params) => { plot(model, plot_params); }
-        _ => {}
+        Plot(plot_params) => { plot(&model.data, plot_params); }
     }
 }
 

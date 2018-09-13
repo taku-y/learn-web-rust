@@ -34,7 +34,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use tungstenite::server::accept;
 use tungstenite::{connect, WebSocket};
-use tdv_msg::{WsMessage, DataFrame, Trace, PlotParam, Connect};
+use tdv_msg::{WsMessage, DataFrame, Connect, PlotParam, Trace, Scatter};
 use url::Url;
 
 // https://users.rust-lang.org/t/rusts-equivalent-of-cs-system-pause/4494/2
@@ -171,17 +171,17 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
         area_name: "plot_area".to_string(),
         traces: vec![
             // 1st trace
-            Trace {
+            Trace::Scatter(Scatter {
                 df_name: "3-dim vector".to_string(),
                 col_name_x: "x".to_string(),
                 col_name_y: "y".to_string()
-            },
+            }),
             // 2nd trace
-            Trace {
+            Trace::Scatter(Scatter {
                 df_name: "3-dim vector".to_string(),
                 col_name_x: "y".to_string(),
                 col_name_y: "x".to_string()
-            },
+            }),
         ]
     }.into_command();
 
