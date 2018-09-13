@@ -1,0 +1,17 @@
+[package]
+name = "tdv_client"
+version = "0.1.0"
+authors = ["root"]
+edition = "2018"
+
+[dependencies]
+serde_derive = "1.0.70"
+serde_json = "1.0.24"
+serde = "1.0.70"
+tungstenite = "0.5.2"
+tdv_msg = { path = "../tdv_msg" }
+url = "1.7.0"
+
+[[example]]
+name = "scatter"
+path = "examples/scatter.rs"

@@ -104,7 +104,7 @@ fn who_are_you(websocket: &mut WebSocket<TcpStream>) -> WsMessage {
     serde_json::from_str(msg.to_text().unwrap()).unwrap()
 }
 
-fn start_wdv_server() {
+fn start_tdv_server() {
     let server = TcpListener::bind("0.0.0.0:9001").unwrap();
     let ws_ui = Arc::new(Mutex::new(Option::None));
     let ws_client = Arc::new(Mutex::new(Option::None));
@@ -196,36 +196,7 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
 
 fn main() {
     thread::spawn(|| { start_web_server(); });
-    thread::spawn(|| { start_wdv_server(); });
+    thread::spawn(|| { start_tdv_server(); });
 
-    // Client of wdview
-    // Create TcpListener
-    let client = TcpListener::bind("0.0.0.0:9002").unwrap();
-
-    // Wait key press
-    pause();
-
-    // Request for wdview server to get the client to connect to the UI by WebSocket
-    let (mut socket, response) = connect(Url::parse("ws://0.0.0.0:9001").unwrap())
-        .expect("Can't connect");
-    let msg = WsMessage::IAmClient;
-    let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
-    println!("{:?}", &msg);
-    socket.write_message(msg).unwrap();
-
-    // Send a request from the client to the UI to make a websocket
-    let msg = WsMessage::Connect(Connect { address: "ws://0.0.0.0:9002".to_string() });
-    let msg = tungstenite::protocol::Message::Text(serde_json::to_string(&msg).unwrap());
-    socket.write_message(msg).unwrap();
-
-    // Handshake with the UI
-    for stream in client.incoming() {
-        let stream = stream.unwrap();
-        println!("{:?}", &stream);
-        let mut websocket = accept(stream).unwrap();
-
-        send_test_message(&mut websocket);
-
-        loop {}
-    }
+    loop {};
 }

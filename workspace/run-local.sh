@@ -11,6 +11,12 @@ cargo web build --release --target=wasm32-unknown-unknown
 popd
 echo "ui build complete"
 
+echo "building client"
+pushd tdv_client
+cargo build --release 
+popd
+echo "client build complete"
+
 cp tdv_ui/target/wasm32-unknown-unknown/release/tdv_ui.js \
 tdv_server/static/tdv_ui.js
 cp tdv_ui/target/wasm32-unknown-unknown/release/tdv_ui.wasm \
