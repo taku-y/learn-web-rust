@@ -19,11 +19,8 @@ use std::collections::HashMap;
 use yew::prelude::*;
 use yew::services::ConsoleService;
 use yew::services::websocket::{WebSocketService, WebSocketTask};
-//use yew::format::Text;
 use tdv_msg::{WsMessage, DataFrame, Command};
 use msg::{ModelMessage, WsMessageForModel};
-//use std::thread;
-//use stdweb::web::WebSocket;
 use plot::plot;
 
 pub struct Model {
@@ -73,6 +70,9 @@ impl Component for Model {
             ModelMessage::UiMessage(_) => { self.console.info(&format!("UiMessage")); }
             ModelMessage::Ignore => { self.console.info(&format!("Ignore")); }
         }
+
+        // Always update the view, but it can be inefficient
+        // TODO: Fix here if in some cases the view shouldn't be updated
         true
     }
 }
@@ -81,15 +81,19 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
     model.console.info("Received Websocket Message");
     model.console.info(&format!("{:?}", &wsmsg));
 
+    use WsMessage::*;
+
     match wsmsg {
-        WsMessage::DataFrame(df) => {
+        DataFrame(df) => {
             model.data.insert(df.name.clone(), df);
         }
-        WsMessage::Command(command) => {
+
+        Command(command) => {
             model.commands.push(command);
-            process_last_command(&model);
+            process_last_command(model);
         }
-        WsMessage::Connect(connect) => {
+
+        Connect(connect) => {
             let client_address = connect.address;
             let callback = model.link.send_back(
                 |WsMessageForModel(msg)| { ModelMessage::WsMessage(msg) }
