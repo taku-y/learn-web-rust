@@ -103,20 +103,39 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
                                                                    callback.into(), notification));
             model.console.info("Finished");
         }
-        WsMessage::WhoAreYou => { model.ws_server.send(WsMessage::IAmUI); }
-        WsMessage::Ignore => {}
-        WsMessage::IAmUI => {}
-        WsMessage::IAmClient => {}
+
+        WhoAreYou => { model.ws_server.send(WsMessage::IAmUI); }
+
+        Ignore => {}
+
+        IAmUI => {}
+
+        IAmClient => {}
     }
 }
 
-fn process_last_command(model: &Model) {
+// TODO: Consider how to handle commands history
+fn process_last_command(model: &mut Model) {
     let command = model.commands.last().unwrap();
 
-    use Command::{Plot};
+    use Command::{Plot, UpdateStyle};
 
     match command {
         Plot(plot_params) => { plot(&model.data, plot_params); }
+
+        // TODO: implement here
+        UpdateStyle(string) => {
+            js ! {
+                var sheets = document.styleSheets;
+                console.log(sheets);
+                sheets[1].cssRules[0].style.backgroundColor = "blue";
+//                var head = document.getElementsByTagName("head")[0];
+//                var style = head.getElementsByTagName("style")[0];
+//                style.innerHTML = @{ string };
+//                console.log(style.innerHTML);
+//                console.log(head.children);
+            }
+        }
     }
 }
 

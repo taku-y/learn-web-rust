@@ -2,7 +2,7 @@ extern crate tdv_client;
 extern crate tdv_msg;
 
 use tdv_client::TdvClient;
-use tdv_msg::{WsMessage, DataFrame, PlotParam, Trace, Scatter};
+use tdv_msg::{WsMessage, DataFrame, PlotParam, Trace, Scatter, Command};
 
 fn main() {
     let mut client = TdvClient::new("0.0.0.0:9001".to_string(),
@@ -37,4 +37,7 @@ fn main() {
 
     client.send_ws_message(msg1);
     client.send_ws_message(msg2);
+
+    let msg3 = WsMessage::Command(Command::UpdateStyle("hey!".to_string()));
+    client.send_ws_message(msg3);
 }

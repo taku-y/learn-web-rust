@@ -70,6 +70,8 @@ impl DataFrame {
 pub enum Command {
     /// Plot data using Plotly.
     Plot(PlotParam),
+    /// Update style tag in html's header
+    UpdateStyle(String),
 }
 
 /// Represent request to make websocket between the UI and the client.
