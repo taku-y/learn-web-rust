@@ -8,6 +8,7 @@ use tdv_ui::Model;
 
 fn main() {
     yew::initialize();
-    App::<Model>::new().mount(document().get_element_by_id("data_list").unwrap());
+    // TODO: check if tdv_data_list is the right tag to mount
+    App::<Model>::new().mount(document().get_element_by_id("tdv_data_list").unwrap());
     yew::run_loop();
 }

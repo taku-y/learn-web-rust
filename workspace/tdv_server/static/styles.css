@@ -13,14 +13,19 @@ body {
   height: 100%;
 }
 
+div {
+  border-style: solid;
+  border-width: 1px;
+}
+
 /* List of data frame */
-#data_list {
+#tdv_data_list {
     width: 20%;
     height: 100%;
 }
 
 /* Area where each plot is placed */
-#plot_area {
+#tdv_plot_area {
     width: 80%;
     height: 100%;
 }
