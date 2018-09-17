@@ -14,3 +14,7 @@ url = "1.7.0"
 [[example]]
 name = "scatter"
 path = "examples/scatter.rs"
+
+[[example]]
+name = "grid"
+path = "examples/grid.rs"

@@ -18,14 +18,15 @@ fn main() {
         data: vec![vec![5.0, 6.0, 7.0, 8.0],
                    vec![9.0, 12.0, 11.0, 10.0]],
     });
-    let mut grid_layout = GridLayout::new(3)
+    let msg_gl = GridLayout::new(3)
         .add("grid_elem1".to_string(), Row(1), Col(1))
         .add("grid_elem2".to_string(), Row(1), Col(2))
-        .add("grid_elem3".to_string(), Row((1, 2)), Col(1))
-        .add("grid_elem4".to_string(), Row(2), Col((1, 2)));
-    let msg_plot = |id| {
+        .add("grid_elem3".to_string(), Row(2), Col((1, 2)))
+        .add("grid_elem4".to_string(), Row((1, 2)), Col(3))
+        .into_command();
+    let msg_plot = |id: String| {
         PlotParam {
-            area_name: id.to_string(),
+            area_name: id,
             traces: vec![
                 // 1st trace
                 Trace::Scatter(Scatter {
@@ -44,9 +45,9 @@ fn main() {
     };
 
     client.send_ws_message(msg_df);
-    client.send_ws_message(msg_plot("grid_elem1"));
-    client.send_ws_message(msg_plot("grid_elem2"));
-    client.send_ws_message(msg_plot("grid_elem3"));
-    client.send_ws_message(msg_plot("grid_elem4"));
-    client.send_ws_message(msg_plot("grid_elem5"));
+    client.send_ws_message(msg_gl);
+    client.send_ws_message(msg_plot("grid_elem1".to_string()));
+    client.send_ws_message(msg_plot("grid_elem2".to_string()));
+    client.send_ws_message(msg_plot("grid_elem3".to_string()));
+    client.send_ws_message(msg_plot("grid_elem4".to_string()));
 }

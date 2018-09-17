@@ -1,21 +1,21 @@
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GridElement {
-    id: String,
-    row: u32,
-    row_max: u32,
-    col: u32,
-    col_max: u32
+    pub id: String,
+    pub row: u32,
+    pub row_max: u32,
+    pub col: u32,
+    pub col_max: u32
 }
 
 /// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GridLayout {
-    columns: u32,
-    elements: Vec<GridElement>,
+    pub n_columns: u32,
+    pub elements: Vec<GridElement>,
 }
 
-pub struct Row<T>(T);
-pub struct Col<T>(T);
+pub struct Row<T>(pub T);
+pub struct Col<T>(pub T);
 
 impl<T: RowOrCol> Row<T> {
     fn value(&self) -> (u32, u32) { self.0.value() }
@@ -38,9 +38,9 @@ impl RowOrCol for (u32, u32) {
 }
 
 impl GridLayout {
-    pub fn new(columns: u32) -> Self {
+    pub fn new(n_columns: u32) -> Self {
         Self {
-            columns,
+            n_columns,
             elements: Vec::new(),
         }
     }

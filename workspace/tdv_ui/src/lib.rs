@@ -14,6 +14,7 @@ extern crate tdv_msg;
 
 pub mod msg;
 pub mod plot;
+pub mod grid;
 
 use std::collections::HashMap;
 use yew::prelude::*;
@@ -22,6 +23,7 @@ use yew::services::websocket::{WebSocketService, WebSocketTask};
 use tdv_msg::{WsMessage, DataFrame, Command};
 use msg::{ModelMessage, WsMessageForModel};
 use plot::plot;
+use grid::set_grid_layout;
 
 pub struct Model {
     link: ComponentLink<Model>,
@@ -118,24 +120,11 @@ fn process_wsmsg(model: &mut Model, wsmsg: WsMessage) {
 fn process_last_command(model: &mut Model) {
     let command = model.commands.last().unwrap();
 
-    use Command::{Plot, UpdateStyle};
+    use Command::{Plot, SetGridLayout};
 
     match command {
         Plot(plot_params) => { plot(&model.data, plot_params); }
-
-        // TODO: implement here
-        UpdateStyle(string) => {
-            js ! {
-                var sheets = document.styleSheets;
-                console.log(sheets);
-                sheets[1].cssRules[0].style.backgroundColor = "blue";
-//                var head = document.getElementsByTagName("head")[0];
-//                var style = head.getElementsByTagName("style")[0];
-//                style.innerHTML = @{ string };
-//                console.log(style.innerHTML);
-//                console.log(head.children);
-            }
-        }
+        SetGridLayout(grid_layout) => { set_grid_layout(grid_layout); }
     }
 }
 

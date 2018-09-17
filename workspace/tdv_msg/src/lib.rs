@@ -10,7 +10,7 @@ extern crate serde_derive;
 extern crate failure;
 
 pub mod grid;
-use grid::*;
+pub use grid::*;
 
 /// Message for WebSocket.
 #[derive(Serialize, Deserialize, Debug)]

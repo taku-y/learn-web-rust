@@ -37,7 +37,4 @@ fn main() {
 
     client.send_ws_message(msg1);
     client.send_ws_message(msg2);
-
-    let msg3 = WsMessage::Command(Command::UpdateStyle("hey!".to_string()));
-    client.send_ws_message(msg3);
 }
