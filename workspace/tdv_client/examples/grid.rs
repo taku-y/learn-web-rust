@@ -2,8 +2,8 @@ extern crate tdv_client;
 extern crate tdv_msg;
 
 use tdv_client::TdvClient;
-use tdv_msg::{WsMessage, DataFrame, PlotParam, Trace, Scatter, Command, GridLayout,
-              GridElement, Row, Col};
+use tdv_msg::{WsMessage, DataFrame, PlotParam, Trace, Scatter, GridLayout,
+              Row, Col};
 
 fn main() {
     let mut client = TdvClient::new("0.0.0.0:9001".to_string(),
