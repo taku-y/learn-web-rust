@@ -111,14 +111,13 @@ fn start_tdv_server() {
 
     for stream in server.incoming() {
         let stream = stream.unwrap();
-        println!("Made a connection: {:?}", &stream);
+        println!("Connection was established: {:?}", &stream);
 
         let mut ws_ui_ = Arc::clone(&ws_ui);
         let mut ws_client_ = Arc::clone(&ws_client);
 
         spawn(move || {
             let mut websocket = accept(stream).unwrap();
-
             match who_are_you(&mut websocket) {
                 WsMessage::IAmUI => {
                     {
@@ -142,7 +141,11 @@ fn start_tdv_server() {
                     loop {
                         // Wait a request from the client
                         let mut ws_client = ws_client_.lock().unwrap();
-                        let msg = (*ws_client).as_mut().unwrap().read_message().unwrap();
+                        //let msg = (*ws_client).as_mut().unwrap().read_message().unwrap();
+                        let msg = match (*ws_client).as_mut().unwrap().read_message() {
+                            Ok(v) => v,
+                            Err(e) => { println!("{}", e); return; }
+                        };
                         println!("Received: {:?} from client, send to UI", msg);
 
                         // Send a request to the UI to make a websocket from the UI to the client
@@ -187,7 +190,7 @@ fn send_test_message<T>(websocket: &mut WebSocket<T>)
 
     let msg1 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg1).unwrap());
     let msg2 = tungstenite::protocol::Message::Text(serde_json::to_string(&msg2).unwrap());
-    println!("Following messages will be sent");
+    println!("Following messages will be sent soon");
     println!("{:?}", &msg1);
     println!("{:?}", &msg2);
     websocket.write_message(msg1).unwrap();
