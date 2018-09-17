@@ -9,6 +9,9 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate failure;
 
+pub mod grid;
+use grid::*;
+
 /// Message for WebSocket.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum WsMessage {
@@ -70,8 +73,8 @@ impl DataFrame {
 pub enum Command {
     /// Plot data using Plotly.
     Plot(PlotParam),
-    /// Update style tag in html's header
-    UpdateStyle(String),
+    /// Set grid layout.
+    SetGridLayout(GridLayout),
 }
 
 /// Represent request to make websocket between the UI and the client.
@@ -96,6 +99,14 @@ impl PlotParam {
     /// utility function.
     pub fn into_command(self) -> WsMessage {
         WsMessage::Command(Command::Plot(self))
+    }
+}
+
+impl GridLayout {
+    /// Create `WsMessage::Command` object from `Command::Plot`. It is just a
+    /// utility function.
+    pub fn into_command(self) -> WsMessage {
+        WsMessage::Command(Command::SetGridLayout(self))
     }
 }
 
