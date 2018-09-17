@@ -71,3 +71,10 @@ impl TdvClient {
         send_ws_message(self.socket_ui.as_mut().unwrap(), msg);
     }
 }
+
+impl Drop for TdvClient {
+    fn drop(&mut self) {
+        self.socket_server.close(None);
+        self.socket_ui.as_mut().unwrap().close(None);
+    }
+}
