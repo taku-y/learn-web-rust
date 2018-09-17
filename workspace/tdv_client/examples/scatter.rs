@@ -18,7 +18,7 @@ fn main() {
                    vec![9.0, 12.0, 11.0, 10.0]],
     });
     let msg2 = PlotParam {
-        area_name: "plot_area".to_string(),
+        area_name: "default".to_string(),
         traces: vec![
             // 1st trace
             Trace::Scatter(Scatter {

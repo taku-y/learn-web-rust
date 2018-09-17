@@ -13,16 +13,14 @@ body {
   height: 100%;
 }
 
+/* List of data frame */
 #data_list {
     width: 20%;
     height: 100%;
 }
 
+/* Area where each plot is placed */
 #plot_area {
     width: 80%;
     height: 100%;
-}
-
-.todomvc-wrapper {
-    visibility: visible !important;
 }
